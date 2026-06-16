@@ -1,0 +1,21 @@
+{
+  "name": "SarkariAlert — Govt Job Portal",
+  "short_name": "SarkariAlert",
+  "description": "India ki #1 Sarkari Naukri website",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ],
+  "categories": ["education", "government", "jobs"],
+  "shortcuts": [
+    { "name": "Latest Jobs", "url": "/jobs", "description": "Sarkari Jobs dekho" },
+    { "name": "Current Affairs", "url": "/current-affairs", "description": "Daily Current Affairs" },
+    { "name": "Previous Papers", "url": "/previous-papers", "description": "Download Papers" },
+    { "name": "Resume Builder", "url": "/resume", "description": "Free Resume Banao" }
+  ]
+}
