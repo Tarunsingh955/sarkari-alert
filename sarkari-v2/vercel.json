@@ -1,6 +1,12 @@
 {
   "crons": [
-    { "path": "/api/automation?secret=CRON_SECRET_HERE", "schedule": "0 */2 * * *" },
-    { "path": "/api/cron/disable-expired?secret=CRON_SECRET_HERE", "schedule": "0 0 * * *" }
+    {
+      "path": "/api/cron/fetch-jobs",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/disable-expired",
+      "schedule": "0 1 * * *"
+    }
   ]
 }
