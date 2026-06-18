@@ -1,5 +1,4 @@
 // app/jobs/[slug]/page.tsx
-// NOTE: Rename folder from 'slug' to '[slug]' after download
 import { supabaseAdmin } from '@/lib/supabase'
 import { generateJobMeta, generateJobSchema, generateFAQSchema, generateBreadcrumbSchema } from '@/lib/seo'
 import Header from '@/components/ui/Header'
@@ -46,11 +45,9 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <Header />
       <main style={{ maxWidth: 1000, margin: '0 auto', padding: 16 }}>
-        {/* Breadcrumb */}
         <nav style={{ fontSize: 12, color: '#64748b', marginBottom: 16 }}>
           <a href="/" style={{ color: '#94a3b8', textDecoration: 'none' }}>Home</a> › <a href="/jobs" style={{ color: '#94a3b8', textDecoration: 'none' }}>Jobs</a> › <span style={{ color: '#f59e0b' }}>{job.title}</span>
         </nav>
-        {/* Header Card */}
         <div style={{ background: '#1e293b', borderRadius: 16, padding: 24, marginBottom: 20, border: '1px solid #334155' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ flex: 1 }}>
@@ -70,7 +67,6 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
           </div>
         </div>
         <AdBanner position="job_detail_top" />
-        {/* Info Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12, marginBottom: 20 }}>
           {[['📋 Total Posts', job.total_posts || 'N/A'], ['💰 Salary', job.salary_text || 'As per rules'], ['🎓 Qualification', job.qualification || 'N/A'], ['🎂 Age Limit', job.age_text || 'N/A'], ['📍 State', job.states?.name || 'All India'], ['📝 Exam Date', job.exam_date || 'TBA']].map(([k, v]) => (
             <div key={k} style={{ background: '#1e293b', borderRadius: 10, padding: '14px 16px', border: '1px solid #334155' }}>
@@ -79,7 +75,6 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
             </div>
           ))}
         </div>
-        {/* Important Links */}
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
           <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>🔗 Important Links</h2>
           {[
@@ -99,7 +94,6 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
             </div>
           ))}
         </div>
-        {/* Selection Process */}
         {job.selection_process && (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>📋 Selection Process</h2>
@@ -110,14 +104,12 @@ export default async function JobPage({ params }: { params: Promise<{ slug: stri
             </div>
           </div>
         )}
-        {/* Description */}
         {job.description && (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
             <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>📄 Job Details</h2>
             <div style={{ color: '#cbd5e1', lineHeight: 1.8, fontSize: 14, whiteSpace: 'pre-wrap' }}>{job.description}</div>
           </div>
         )}
-        {/* FAQ Section */}
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
           <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>❓ Frequently Asked Questions</h2>
           {[
