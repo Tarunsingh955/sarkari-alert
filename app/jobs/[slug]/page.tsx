@@ -15,8 +15,9 @@ export async function generateStaticParams() {
   return (data || []).map(j => ({ slug: j.slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const { data: job } = await supabaseAdmin.from('jobs').select('*').eq('slug', params.slug).single()
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const { data: job } = await supabaseAdmin.from('jobs').select('*').eq('slug', slug).single()
   if (!job) return { title: 'Job Not Found' }
   const meta = generateJobMeta(job)
   return { title: meta.title, description: meta.description, keywords: meta.keywords, alternates: { canonical: `/jobs/${job.slug}` }, openGraph: { title: meta.title, description: meta.description, type: 'article' } }
@@ -24,11 +25,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) }
 
-export default async function JobDetailPage({ params }: { params: { slug: string } }) {
-  const { data: job } = await supabaseAdmin.from('jobs').select('*,categories(name,color,icon,slug),states(name),admit_cards(*),results(*),answer_keys(*),syllabus(*)').eq('slug', params.slug).eq('is_published', true).single()
+export default async function JobPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const { data: job } = await supabaseAdmin.from('jobs').select('*,categories(name,color,icon,slug),states(name),admit_cards(*),results(*),answer_keys(*),syllabus(*)').eq('slug', slug).eq('is_published', true).single()
   if (!job) notFound()
 
-  supabaseAdmin.rpc('increment_job_views', { job_slug: params.slug }).then(() => {})
+  supabaseAdmin.rpc('increment_job_views', { job_slug: slug }).then(() => {})
 
   const days = daysLeft(job.last_date)
   const urgent = days <= 7 && days > 0
