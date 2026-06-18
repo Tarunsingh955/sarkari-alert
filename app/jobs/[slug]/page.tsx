@@ -14,8 +14,8 @@ export async function generateStaticParams() {
   return (data || []).map(j => ({ slug: j.slug }))
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const { slug } = params
   const { data: job } = await supabaseAdmin.from('jobs').select('*').eq('slug', slug).single()
   if (!job) return { title: 'Job Not Found' }
   const meta = generateJobMeta(job)
@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) }
 
-export default async function JobPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function JobPage({ params }: { params: { slug: string } }) {
+  const { slug } = params
   const { data: job } = await supabaseAdmin.from('jobs').select('*,categories(name,color,icon,slug),states(name),admit_cards(*),results(*),answer_keys(*),syllabus(*)').eq('slug', slug).eq('is_published', true).single()
   if (!job) notFound()
 
