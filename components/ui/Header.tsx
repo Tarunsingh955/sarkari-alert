@@ -6,7 +6,12 @@ export default function Header() {
   return (
     <header style={{background:'#0f172a',borderBottom:'2px solid #f59e0b',position:'sticky',top:0,zIndex:200,boxShadow:'0 2px 20px rgba(0,0,0,0.5)'}}>
       <div style={{background:'#f59e0b',padding:'3px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',overflow:'hidden'}}>
-        <div style={{flex:1,overflow:'hidden'}}><marquee style={{fontSize:12,color:'#000',fontWeight:600}}>🔴 BREAKING: SSC CGL 2025 — 17727 Posts | Railway NTPC 11558 Posts | UP Police 60244 Posts | Bihar Police 21391 Posts | SBI Clerk 13735 Posts</marquee></div>
+        <div style={{flex:1,overflow:'hidden'}}>
+  <div style={{fontSize:12,color:'#000',fontWeight:600,whiteSpace:'nowrap'}}>
+    BREAKING: SSC CGL 2025 - 17727 Posts | Railway NTPC 11558 Posts | UP Police 60244 Posts | Bihar Police 21391 Posts | SBI Clerk 13735 Posts
+  </div>
+</div>
+
         <a href="/admin" style={{background:'rgba(0,0,0,0.2)',border:'1px solid rgba(0,0,0,0.3)',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:700,textDecoration:'none',color:'#000',marginLeft:12,flexShrink:0}}>Admin</a>
       </div>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56}}>
