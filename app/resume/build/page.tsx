@@ -105,4 +105,10 @@ export default function ResumeBuildPage() {
           <button onClick={() => {
             if (!data.name || !data.phone || !data.email) { alert('Naam, Phone aur Email zaroori hai!'); return }
             setStep(2)
-          }} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 10, padding: '12px 24px',
+          }} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 10, padding: '12px 24px',color: '#000', fontWeight: 800, fontSize: 14, cursor: 'pointer', width: '100%' }}>👁️ Preview & Download Resume</button>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  )
+}
