@@ -58,24 +58,6 @@ export default async function ResumePage() {
           </div>
         )}
 
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginTop: 24, border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>✨ Kyun hamara Resume Builder?</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12 }}>
-            {[
-              ['⚡', 'Fast', '2 minute mein resume ready'],
-              ['🎓', 'Govt Job Ready', 'Sarkari naukri format ke liye banaya gaya'],
-              ['📱', 'Mobile Friendly', 'Phone se bhi banao'],
-              ['💯', 'Free Template', 'Ek template hamesha free hai'],
-            ].map(([icon, title, desc]) => (
-              <div key={title} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>{icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>{title}</div>
-                <div style={{ fontSize: 12, color: '#64748b' }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <AdBanner position="footer" />
       </main>
       <Footer />
