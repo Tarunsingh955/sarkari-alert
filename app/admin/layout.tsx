@@ -1,27 +1,26 @@
 import { getAdminUser } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 
 const NAV = [
-  { href: '/admin', label: '📊 Dashboard' },
-  { href: '/admin/jobs', label: '🏛️ Jobs' },
-  { href: '/admin/news', label: '📰 News' },
-  { href: '/admin/queue', label: '⏳ Review Queue' },
-  { href: '/admin/papers', label: '📄 Previous Papers' },
-  { href: '/admin/whatsapp', label: '💬 WhatsApp' },
-  { href: '/admin/users', label: '👥 Users' },
-  { href: '/admin/membership', label: '⭐ Membership' },
-  { href: '/admin/analytics', label: '📈 Analytics' },
-  { href: '/admin/sources', label: '🤖 Sources' },
-  { href: '/admin/seo', label: '🔍 SEO' },
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/jobs', label: 'Jobs' },
+  { href: '/admin/news', label: 'News' },
+  { href: '/admin/queue', label: 'Review Queue' },
+  { href: '/admin/papers', label: 'Previous Papers' },
+  { href: '/admin/whatsapp', label: 'WhatsApp' },
+  { href: '/admin/users', label: 'Users' },
+  { href: '/admin/membership', label: 'Membership' },
+  { href: '/admin/analytics', label: 'Analytics' },
+  { href: '/admin/sources', label: 'Sources' },
+  { href: '/admin/seo', label: 'SEO' },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await getAdminUser()
-  if (!admin) redirect('/admin/login')
-
+  if (!admin) {
+    return <>{children}</>
+  }
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex' }}>
-      {/* Sidebar */}
       <aside style={{ width: 220, background: '#0a0f1e', borderRight: '1px solid #1e293b', padding: '0', flexShrink: 0, position: 'sticky', top: 0, height: '100vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #1e293b' }}>
           <div style={{ fontSize: 16, fontWeight: 900, color: '#f59e0b' }}>SarkariAlert</div>
@@ -44,10 +43,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <form action="/api/auth/logout" method="POST">
             <button type="submit" style={{ width: '100%', padding: '8px', background: '#ef444420', border: '1px solid #ef444440', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Logout</button>
           </form>
-          <a href="/" target="_blank" style={{ display: 'block', textAlign: 'center', marginTop: 8, color: '#64748b', fontSize: 11, textDecoration: 'none' }}>View Website →</a>
+          <a href="/" target="_blank" style={{ display: 'block', textAlign: 'center', marginTop: 8, color: '#64748b', fontSize: 11, textDecoration: 'none' }}>View Website</a>
         </div>
       </aside>
-      {/* Main Content */}
       <main style={{ flex: 1, overflowY: 'auto', minHeight: '100vh' }}>
         {children}
       </main>
