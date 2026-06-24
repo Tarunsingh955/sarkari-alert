@@ -32,11 +32,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <nav style={{ flex: 1, padding: '8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {NAV.map(item => (
-            <a key={item.href} href={item.href} style={{ padding: '10px 12px', borderRadius: 8, color: '#94a3b8', fontSize: 12, textDecoration: 'none', display: 'block', transition: 'all 0.15s', fontWeight: 500 }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#f59e0b' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8' }}>
-              {item.label}
-            </a>
+            <a key={item.href} href={item.href} style={{ padding: '10px 12px', borderRadius: 8, color: '#94a3b8', fontSize: 12, textDecoration: 'none', display: 'block', fontWeight: 500 }}>
+  {item.label}
+</a>
           ))}
         </nav>
         <div style={{ padding: '12px 16px', borderTop: '1px solid #1e293b' }}>
