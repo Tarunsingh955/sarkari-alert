@@ -31,9 +31,7 @@ export default async function AdminDashboard() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14, marginBottom: 28 }}>
         {[['Total Jobs', jobs, '#f59e0b', '🏛️', '/admin/jobs'], ['Total News', news, '#3b82f6', '📰', '/admin/news'], ['Total Users', users, '#8b5cf6', '👥', '/admin/users'], ['Premium Members', premium, '#10b981', '⭐', '/admin/membership'], ['WhatsApp Subs', whatsapp, '#ec4899', '💬', '/admin/whatsapp'], ['Pending Queue', queue, '#ef4444', '⏳', '/admin/queue'], ['Total Revenue', `Rs.${totalRevenue.toLocaleString('en-IN')}`, '#10b981', '💰', '/admin/analytics']].map(([l, v, c, i, href]) => (
-          <a key={String(l)} href={href as string} style={{ background: '#1e293b', borderRadius: 12, padding: 18, border: '1px solid #334155', textDecoration: 'none', display: 'block', transition: 'all 0.2s' }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = String(c) + '60'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.transform = 'none' }}>
+          <a key={String(l)} href={href as string} style={{ background: '#1e293b', borderRadius: 12, padding: 18, border: '1px solid #334155', textDecoration: 'none', display: 'block' }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>{String(i)}</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: String(c), marginBottom: 4 }}>{String(v)}</div>
             <div style={{ fontSize: 11, color: '#64748b' }}>{String(l)}</div>
@@ -46,9 +44,7 @@ export default async function AdminDashboard() {
           <h3 style={{ color: '#f59e0b', fontSize: 15, fontWeight: 800, marginBottom: 16 }}>⚡ Quick Actions</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[['➕ Add New Job', '/admin/jobs'], ['📰 Add News', '/admin/news'], ['📄 Add Paper', '/admin/papers'], ['⏳ Review Queue', '/admin/queue'], ['💬 WhatsApp Broadcast', '/admin/whatsapp'], ['🤖 Run Automation', '/api/automation']].map(([l, h]) => (
-              <a key={String(l)} href={String(h)} style={{ display: 'block', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#f59e0b'}
-                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
+              <a key={String(l)} href={String(h)} style={{ display: 'block', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#94a3b8', fontSize: 13, textDecoration: 'none' }}>
                 {String(l)}
               </a>
             ))}
