@@ -93,7 +93,6 @@ export async function runEmploymentNewsScrape(sourceId: string): Promise<{ fetch
 
         await supabaseAdmin.from('automation_queue').insert({
           title,
-          slug,
           data: {
             title,
             department: row.organisation,

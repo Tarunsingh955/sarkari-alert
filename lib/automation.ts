@@ -38,7 +38,6 @@ async function scrapeRSS(source: any): Promise<number> {
     const slug = generateUniqueSlug(item.title || 'untitled')
     await supabaseAdmin.from('automation_queue').insert({
       title: item.title || '',
-      slug,
       data: {
         title: item.title,
         content: item.content || item.contentSnippet || '',
