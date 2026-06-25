@@ -84,6 +84,12 @@ export async function runEmploymentNewsScrape(sourceId: string): Promise<{ fetch
         const slug = generateUniqueSlug(title)
         const lastDateISO = parseDDMMYYYY(row.lastDate)
 
+        // Skip if last date has already passed
+        const lastDateObj = new Date(lastDateISO)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (lastDateObj < today) { continue }
+
         let detailUrl = ''
         if (row.detailLink) {
           detailUrl = row.detailLink.startsWith('http')
