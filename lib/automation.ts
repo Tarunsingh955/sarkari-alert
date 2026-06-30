@@ -31,15 +31,15 @@ async function scrapeRSS(source: any): Promise<number> {
   const parser = new RSSParser({ timeout: 10000 })
   const feed = await parser.parseURL(source.url)
   let count = 0
+
+  let itemType: 'job' | 'news' | 'current_affairs' = 'job'
+  if (source.category === 'news') itemType = 'news'
+  if (source.category === 'current_affairs') itemType = 'current_affairs'
+
   for (const item of (feed.items || []).slice(0, 15)) {
-    const { data: existing } = await supabaseAdmin.from('automation_queue').select('id').eq('source_url', item.link || '').single()
+    const { data: existing } = await supabaseAdmin.from('automation_queue').select('id').eq('source_url', item.link || '').eq('type', itemType).single()
     if (existing) continue
     const slug = generateUniqueSlug(item.title || 'untitled')
-
-    let itemType: 'job' | 'news' | 'current_affairs' = 'job'
-    if (source.category === 'news') itemType = 'news'
-    if (source.category === 'current_affairs') itemType = 'current_affairs'
-
     const rawContent = item.content || item.contentSnippet || ''
 
     await supabaseAdmin.from('automation_queue').insert({
