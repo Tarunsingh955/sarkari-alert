@@ -37,7 +37,7 @@ async function scrapeRSS(source: any): Promise<number> {
   if (source.category === 'current_affairs') itemType = 'current_affairs'
 
   for (const item of (feed.items || []).slice(0, 15)) {
-    const { data: existing } = await supabaseAdmin.from('automation_queue').select('id').eq('source_url', item.link || '').eq('type', itemType).single()
+    const { data: existing } = await supabaseAdmin.from('automation_queue').select('id').eq('source_url', item.link || '').eq('type', itemType).maybeSingle()
     if (existing) continue
     const slug = generateUniqueSlug(item.title || 'untitled')
     const rawContent = item.content || item.contentSnippet || ''
