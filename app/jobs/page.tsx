@@ -16,8 +16,8 @@ const STATES = ['Uttar Pradesh','Bihar','Rajasthan','Madhya Pradesh','Maharashtr
 
 async function getJobs(searchParams: any) {
   let query = supabaseAdmin.from('jobs').select('*,categories(name,color,icon,slug),states(name)', { count: 'exact' }).eq('is_published', true).eq('is_active', true)
-  if (searchParams.category) query = query.ilike('categories.name', `%${searchParams.category}%`)
-  if (searchParams.state) query = query.ilike('states.name', `%${searchParams.state}%`)
+  if (searchParams.category) query = query.ilike('department', `%${searchParams.category}%`)
+  if (searchParams.state) query = query.ilike('department', `%${searchParams.state}%`)
   if (searchParams.search) query = query.or(`title.ilike.%${searchParams.search}%,department.ilike.%${searchParams.search}%`)
   const sort = searchParams.sort || 'newest'
   if (sort === 'deadline') query = query.order('last_date', { ascending: true })
