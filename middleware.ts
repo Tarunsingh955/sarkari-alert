@@ -14,7 +14,7 @@ export async function middleware(req: NextRequest) {
   res.headers.set('X-XSS-Protection', '1; mode=block')
   res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
   res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
-  res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com;")
+  // res.headers.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com;")
 
   // Admin route protection
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {

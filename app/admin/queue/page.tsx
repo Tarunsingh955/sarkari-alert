@@ -10,7 +10,7 @@ export default function AdminQueuePage() {
   const showMsg = (text:string,type='success') => { setMsg({text,type}); setTimeout(()=>setMsg({text:'',type:''}),5000) }
   useEffect(()=>{ fetchQueue() },[])
   async function fetchQueue() { setLoading(true); const res=await fetch('/api/admin/queue?status=pending'); const data=await res.json(); setItems(data.items||[]); setSelected([]); setLoading(false) }
-  async function runAutomation() { setRunning(true); showMsg('Automation chal rahi hai...'); const res=await fetch('/api/automation'); const data=await res.json(); showMsg(`Done! ${data.fetched||0} items fetched.`); fetchQueue(); setRunning(false) }
+  async function runAutomation() { setRunning(true); showMsg('Automation chal rahi hai...'); const res=await fetch('/api/admin/run-automation',{method:'POST'}); const data=await res.json(); if(data.success) showMsg(`Done! ${data.fetched||0} items fetched.`); else showMsg('Error: '+(data.error||'Failed'),'error'); fetchQueue(); setRunning(false) }
   async function handleAction(id:string,action:'approve'|'reject') {
     const res=await fetch('/api/admin/queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,id})})
     const data=await res.json()
