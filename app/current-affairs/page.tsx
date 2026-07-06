@@ -1,77 +1,135 @@
-// app/current-affairs/page.tsx
-import { supabaseAdmin } from '@/lib/supabase'
+'use client'
+import { useState, useEffect } from 'react'
 import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
-import AdBanner from '@/components/ui/AdBanner'
-import type { Metadata } from 'next'
-
-export const revalidate = 300
-
-export const metadata: Metadata = {
-  title: 'Current Affairs 2025 — Daily GK Updates | SarkariAlert',
-  description: 'Daily Current Affairs aur GK questions exam preparation ke liye. SSC, Railway, Banking, UPSC exams ke liye useful.',
-}
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-async function getCurrentAffairs(searchParams: any) {
-  let query = supabaseAdmin.from('current_affairs').select('*', { count: 'exact' }).eq('is_active', true)
-  if (searchParams.month) query = query.eq('month', searchParams.month)
-  if (searchParams.topic) query = query.ilike('topic', `%${searchParams.topic}%`)
-  query = query.order('created_at', { ascending: false }).limit(100)
-  const { data, count } = await query
-  return { items: data || [], total: count || 0 }
-}
+export default function CurrentAffairsPage() {
+  const [items, setItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedMonth, setSelectedMonth] = useState('')
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [score, setScore] = useState({ correct: 0, wrong: 0 })
 
-export default async function CurrentAffairsPage({ searchParams }: { searchParams: Promise<any> }) {
-  const sp = await searchParams
-  const { items, total } = await getCurrentAffairs(sp)
-  const currentYear = new Date().getFullYear()
+  useEffect(() => { fetchItems() }, [selectedMonth])
+
+  async function fetchItems() {
+    setLoading(true)
+    const url = selectedMonth ? `/api/current-affairs?month=${selectedMonth}` : '/api/current-affairs'
+    const res = await fetch(url)
+    const data = await res.json()
+    setItems(data.items || [])
+    setAnswers({})
+    setScore({ correct: 0, wrong: 0 })
+    setLoading(false)
+  }
+
+  function handleAnswer(itemId: string, selected: string, correct: string) {
+    if (answers[itemId]) return
+    setAnswers(prev => ({ ...prev, [itemId]: selected }))
+    if (selected === correct) setScore(s => ({ ...s, correct: s.correct + 1 }))
+    else setScore(s => ({ ...s, wrong: s.wrong + 1 }))
+  }
+
+  const answered = Object.keys(answers).length
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#fff' }}>
       <Header />
       <main style={{ maxWidth: 900, margin: '0 auto', padding: 16 }}>
         <div style={{ marginBottom: 16 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#f1f5f9', marginBottom: 4 }}>Current Affairs {currentYear}</h1>
-          <p style={{ color: '#64748b', fontSize: 13 }}>Daily GK Updates for Sarkari Exams | {total} Questions Available</p>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#f1f5f9', marginBottom: 4 }}>Current Affairs MCQ</h1>
+          <p style={{ color: '#64748b', fontSize: 13 }}>Daily exam preparation questions — answer karke score dekho!</p>
         </div>
-        <AdBanner position="header" />
 
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #334155' }}>
-          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8, fontWeight: 600 }}>Filter by Month:</div>
+        {/* Score Card */}
+        {answered > 0 && (
+          <div style={{ background: '#1e293b', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #334155', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 900, color: '#f59e0b' }}>{answered}/{items.length}</div><div style={{ fontSize: 11, color: '#64748b' }}>Attempted</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 900, color: '#10b981' }}>{score.correct}</div><div style={{ fontSize: 11, color: '#64748b' }}>Correct ✅</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 900, color: '#ef4444' }}>{score.wrong}</div><div style={{ fontSize: 11, color: '#64748b' }}>Wrong ❌</div></div>
+            <div style={{ textAlign: 'center' }}><div style={{ fontSize: 24, fontWeight: 900, color: '#8b5cf6' }}>{answered > 0 ? Math.round(score.correct / answered * 100) : 0}%</div><div style={{ fontSize: 11, color: '#64748b' }}>Score</div></div>
+          </div>
+        )}
+
+        {/* Month Filter */}
+        <div style={{ background: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 16, border: '1px solid #334155' }}>
+          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8, fontWeight: 600 }}>Month Filter:</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <a href="/current-affairs" style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: !sp.month ? '#f59e0b' : '#0f172a', border: `1px solid ${!sp.month ? '#f59e0b' : '#334155'}`, color: !sp.month ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: !sp.month ? 700 : 400 }}>Sab</a>
+            <button onClick={() => setSelectedMonth('')} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: !selectedMonth ? '#f59e0b' : '#0f172a', border: `1px solid ${!selectedMonth ? '#f59e0b' : '#334155'}`, color: !selectedMonth ? '#000' : '#94a3b8', cursor: 'pointer', fontWeight: !selectedMonth ? 700 : 400 }}>Sab</button>
             {MONTHS.map(m => (
-              <a key={m} href={`/current-affairs?month=${m}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: sp.month === m ? '#f59e0b' : '#0f172a', border: `1px solid ${sp.month === m ? '#f59e0b' : '#334155'}`, color: sp.month === m ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: sp.month === m ? 700 : 400 }}>{m}</a>
+              <button key={m} onClick={() => setSelectedMonth(m)} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: selectedMonth === m ? '#f59e0b' : '#0f172a', border: `1px solid ${selectedMonth === m ? '#f59e0b' : '#334155'}`, color: selectedMonth === m ? '#000' : '#94a3b8', cursor: 'pointer', fontWeight: selectedMonth === m ? 700 : 400 }}>{m}</button>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {items.map((item: any, i: number) => (
-            <div key={item.id}>
-              {i === 5 && <AdBanner position="between_jobs" height={60} />}
-              <details style={{ background: '#1e293b', borderRadius: 10, padding: '14px 18px', border: '1px solid #334155', cursor: 'pointer' }}>
-                <summary style={{ color: '#f1f5f9', fontSize: 14, fontWeight: 600, listStyle: 'none', userSelect: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                  <span>Q{i + 1}. {item.question}</span>
-                  {item.topic && <span style={{ background: '#f59e0b20', color: '#f59e0b', fontSize: 10, padding: '2px 8px', borderRadius: 12, flexShrink: 0, fontWeight: 700 }}>{item.topic}</span>}
-                </summary>
-                <p style={{ color: '#10b981', fontSize: 13, lineHeight: 1.7, margin: '10px 0 0', fontWeight: 600 }}>Ans: {item.answer}</p>
-              </details>
-            </div>
-          ))}
-        </div>
-
-        {!items.length && (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>Loading...</div>
+        ) : !items.length ? (
           <div style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📰</div>
-            <p style={{ fontSize: 16, marginBottom: 8 }}>Abhi koi Current Affairs available nahi hain.</p>
-            <p style={{ fontSize: 13 }}>Jaldi hi naye questions add kiye jayenge!</p>
+            <p>Abhi koi Current Affairs available nahi hain.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {items.map((item: any, idx: number) => {
+              const userAnswer = answers[item.id]
+              const correct = item.correct_option || 'A'
+              const options = [
+                { key: 'A', text: item.option_a },
+                { key: 'B', text: item.option_b },
+                { key: 'C', text: item.option_c },
+                { key: 'D', text: item.option_d },
+              ].filter(o => o.text)
+
+              return (
+                <div key={item.id} style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center' }}>
+                    <span style={{ background: '#f59e0b', color: '#000', borderRadius: 6, padding: '2px 10px', fontSize: 13, fontWeight: 900 }}>Q{idx + 1}</span>
+                    {item.topic && <span style={{ background: '#8b5cf620', color: '#8b5cf6', fontSize: 11, padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>{item.topic}</span>}
+                  </div>
+                  <p style={{ color: '#f1f5f9', fontSize: 15, fontWeight: 600, lineHeight: 1.6, marginBottom: 14 }}>{item.question}</p>
+
+                  {options.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                      {options.map(opt => {
+                        const isSelected = userAnswer === opt.key
+                        const isCorrect = opt.key === correct
+                        let bg = '#0f172a', border = '#334155', color = '#94a3b8'
+                        if (userAnswer) {
+                          if (isCorrect) { bg = '#10b98120'; border = '#10b981'; color = '#10b981' }
+                          else if (isSelected) { bg = '#ef444420'; border = '#ef4444'; color = '#ef4444' }
+                        }
+                        return (
+                          <button key={opt.key} onClick={() => handleAnswer(item.id, opt.key, correct)}
+                            style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 14px', background: bg, border: `1px solid ${border}`, borderRadius: 8, color, fontSize: 14, cursor: userAnswer ? 'default' : 'pointer', textAlign: 'left' }}>
+                            <span style={{ background: '#1e293b', borderRadius: 4, padding: '1px 7px', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{opt.key}</span>
+                            {opt.text}
+                            {userAnswer && isCorrect && <span style={{ marginLeft: 'auto' }}>✅</span>}
+                            {userAnswer && isSelected && !isCorrect && <span style={{ marginLeft: 'auto' }}>❌</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <details style={{ background: '#0f172a', borderRadius: 8, padding: '10px 14px', border: '1px solid #334155', cursor: 'pointer' }}>
+                      <summary style={{ color: '#f59e0b', fontSize: 13, fontWeight: 600, listStyle: 'none' }}>Answer Dekho 👁️</summary>
+                      <p style={{ color: '#10b981', fontSize: 14, margin: '10px 0 0', fontWeight: 600 }}>✅ {item.answer}</p>
+                    </details>
+                  )}
+
+                  {userAnswer && item.explanation && (
+                    <div style={{ background: '#0f172a', borderRadius: 8, padding: '12px 14px', border: '1px solid #334155', marginTop: 8 }}>
+                      <div style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, marginBottom: 6 }}>📖 Explanation:</div>
+                      <p style={{ color: '#94a3b8', fontSize: 13, lineHeight: 1.7, margin: 0 }}>{item.explanation}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
-
-        <AdBanner position="footer" />
       </main>
       <Footer />
     </div>
