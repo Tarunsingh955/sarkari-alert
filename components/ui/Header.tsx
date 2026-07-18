@@ -1,17 +1,39 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 const NAV = [{href:'/',label:'Home'},{href:'/jobs',label:'Sarkari Jobs'},{href:'/admit-card',label:'Admit Card'},{href:'/result',label:'Result'},{href:'/previous-papers',label:'Papers'},{href:'/news',label:'News'},{href:'/current-affairs',label:'Current Affairs'},{href:'/resume',label:'Resume'}]
+const FALLBACK_TICKER = "BREAKING: SSC CGL 2025 - 17727 Posts | Railway NTPC 11558 Posts | UP Police 60244 Posts | Bihar Police 21391 Posts | SBI Clerk 13735 Posts"
+
 export default function Header() {
   const [menuOpen,setMenuOpen]=useState(false)
+  const [tickerText, setTickerText] = useState(FALLBACK_TICKER)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadLatestJobs() {
+      try {
+        const res = await fetch('/api/jobs?sort=newest&limit=5')
+        const data = await res.json()
+        const jobs = data.jobs || []
+        if (!jobs.length) return
+        const parts = jobs.map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
+        const text = `BREAKING: ${parts.join(' | ')}`
+        if (!cancelled) setTickerText(text)
+      } catch {
+      }
+    }
+    loadLatestJobs()
+    return () => { cancelled = true }
+  }, [])
+
   return (
     <header style={{background:'#0f172a',borderBottom:'2px solid #f59e0b',position:'sticky',top:0,zIndex:200,boxShadow:'0 2px 20px rgba(0,0,0,0.5)'}}>
       <div style={{background:'#f59e0b',padding:'3px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',overflow:'hidden'}}>
-        <div style={{flex:1,overflow:'hidden'}}>
-  <div style={{fontSize:12,color:'#000',fontWeight:600,whiteSpace:'nowrap'}}>
-    BREAKING: SSC CGL 2025 - 17727 Posts | Railway NTPC 11558 Posts | UP Police 60244 Posts | Bihar Police 21391 Posts | SBI Clerk 13735 Posts
-  </div>
-</div>
-
+        <div className="ticker-viewport" style={{flex:1,overflow:'hidden',position:'relative'}}>
+          <div className="ticker-track" style={{display:'flex',whiteSpace:'nowrap',width:'max-content'}}>
+            <span style={{fontSize:12,color:'#000',fontWeight:600,paddingRight:60}}>{tickerText}</span>
+            <span style={{fontSize:12,color:'#000',fontWeight:600,paddingRight:60}}>{tickerText}</span>
+          </div>
+        </div>
         <a href="/admin" style={{background:'rgba(0,0,0,0.2)',border:'1px solid rgba(0,0,0,0.3)',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:700,textDecoration:'none',color:'#000',marginLeft:12,flexShrink:0}}>Admin</a>
       </div>
       <div style={{maxWidth:1200,margin:'0 auto',padding:'0 16px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56}}>
@@ -25,7 +47,19 @@ export default function Header() {
         <button onClick={()=>setMenuOpen(!menuOpen)} style={{display:'none',background:'none',border:'none',color:'#fff',fontSize:22,cursor:'pointer'}} className="mob-btn">☰</button>
       </div>
       {menuOpen&&<div style={{background:'#1e293b',borderTop:'1px solid #334155'}}>{NAV.map(item=><a key={item.href} href={item.href} style={{display:'block',padding:'12px 20px',color:'#94a3b8',fontSize:14,textDecoration:'none',borderBottom:'1px solid #0f172a'}}>{item.label}</a>)}</div>}
-      <style>{`@media(max-width:900px){.desktop-nav{display:none!important;}.mob-btn{display:block!important;}}`}</style>
+      <style>{`
+        @media(max-width:900px){.desktop-nav{display:none!important;}.mob-btn{display:block!important;}}
+        @keyframes ticker-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .ticker-track {
+          animation: ticker-scroll 60s linear infinite;
+        }
+        .ticker-viewport:hover .ticker-track {
+          animation-play-state: paused;
+        }
+      `}</style>
     </header>
   )
 }

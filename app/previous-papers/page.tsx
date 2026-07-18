@@ -68,7 +68,7 @@ export default async function PreviousPapersPage({ searchParams }: { searchParam
                     <span style={{ fontSize: 11, color: '#64748b' }}>📥 {paper.downloads || 0} downloads</span>
                     {paper.pdf_url ? (
                       paper.is_premium ? (
-                        <a href="/membership" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', borderRadius: 8, padding: '6px 14px', color: '#000', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>Premium PDF</a>
+                        <a href={`/api/papers/download/${paper.id}`} target="_blank" rel="noreferrer" style={{ background: '#10b98122', border: '1px solid #10b98144', borderRadius: 8, padding: '6px 14px', color: '#10b981', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>≡ƒôÑ Download PDF</a>
                       ) : (
                         <a href={paper.pdf_url} target="_blank" rel="noreferrer" style={{ background: '#10b98122', border: '1px solid #10b98144', borderRadius: 8, padding: '6px 14px', color: '#10b981', fontWeight: 700, fontSize: 12, textDecoration: 'none' }}>📥 Download PDF</a>
                       )
