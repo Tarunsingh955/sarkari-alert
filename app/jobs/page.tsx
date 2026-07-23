@@ -15,8 +15,8 @@ const CATEGORIES = ['Central','State','Railway','Banking','Teaching','Defence','
 const STATES = ['Uttar Pradesh','Bihar','Rajasthan','Madhya Pradesh','Maharashtra','Delhi','Haryana','Punjab','Gujarat','Karnataka','Tamil Nadu','West Bengal','Uttarakhand','Himachal Pradesh']
 
 async function getJobs(searchParams: any) {
-  let query = supabaseAdmin.from('jobs').select('*,categories(name,color,icon,slug),states(name)', { count: 'exact' }).eq('is_published', true).eq('is_active', true)
-  if (searchParams.category) query = query.ilike('department', `%${searchParams.category}%`)
+  let query = supabaseAdmin.from('jobs').select(`*,${searchParams.category ? 'categories!inner' : 'categories'}(name,color,icon,slug),states(name)`, { count: 'exact' }).eq('is_published', true).eq('is_active', true)
+  if (searchParams.category) query = query.eq('categories.slug', searchParams.category)
   if (searchParams.state) query = query.ilike('department', `%${searchParams.state}%`)
   if (searchParams.search) query = query.or(`title.ilike.%${searchParams.search}%,department.ilike.%${searchParams.search}%`)
   const sort = searchParams.sort || 'newest'

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const limit = Number(searchParams.get('limit') || 20)
     const sort = searchParams.get('sort') || 'newest'
 
-    let query = supabaseAdmin.from('jobs').select('*,categories(name,color,icon),states(name)', { count: 'exact' }).eq('is_published', true).eq('is_active', true)
+    let query = supabaseAdmin.from('jobs').select(`*,${category ? 'categories!inner' : 'categories'}(name,color,icon,slug),states(name)`, { count: 'exact' }).eq('is_published', true).eq('is_active', true)
     if (category) query = query.eq('categories.slug', category)
     if (state) query = query.ilike('states.name', `%${state}%`)
     if (search) query = query.or(`title.ilike.%${search}%,department.ilike.%${search}%`)

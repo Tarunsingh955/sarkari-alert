@@ -2,6 +2,7 @@ import { supabaseAdmin } from './supabase'
 import { generateUniqueSlug } from './seo'
 import { sendTelegramAlert, sendEmailAlerts, sendWhatsAppAlert, sendPushNotification } from './notifications'
 import { runEmploymentNewsScrape } from './scraper'
+import { classifyJobCategory } from './classify'
 
 export async function runAutomation() {
   console.log('Automation started:', new Date().toISOString())
@@ -150,10 +151,16 @@ export async function approveQueueItem(queueId: string, adminId: string) {
   const slug = generateUniqueSlug(d.title || item.title || 'untitled')
 
   if (item.type === 'job') {
+    const jobTitle = d.title || item.title
+    const jobDept = d.department || d.source_name || 'Government of India'
+    const categorySlug = classifyJobCategory(jobTitle, jobDept)
+    const { data: categoryRow } = await supabaseAdmin.from('categories').select('id').eq('slug', categorySlug).maybeSingle()
+
     const { data: job } = await supabaseAdmin.from('jobs').insert({
-      title: d.title || item.title,
+      title: jobTitle,
       slug,
-      department: d.department || d.source_name || 'Government of India',
+      department: jobDept,
+      category_id: categoryRow?.id || null,
       total_posts: 'As per notification',
       last_date: d.last_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       salary_text: 'As per rules',
