@@ -2,14 +2,15 @@
 import { useState, useEffect } from 'react'
 export default function AdminJobsPage() {
   const [jobs, setJobs] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [msg, setMsg] = useState({ text: '', type: '' })
-  const blankForm = { title:'',department:'',total_posts:'',last_date:'',salary_text:'',salary_min:'',salary_max:'',qualification:'',age_text:'',exam_date:'',apply_link:'',notification_pdf:'',official_website:'',selection_process:'',description:'',notify_text:'Apply Now',is_new:true,is_hot:false,is_published:true }
+  const blankForm = { title:'',department:'',total_posts:'',last_date:'',salary_text:'',salary_min:'',salary_max:'',qualification:'',age_text:'',exam_date:'',apply_link:'',notification_pdf:'',official_website:'',selection_process:'',description:'',notify_text:'Apply Now',category_id:'',is_new:true,is_hot:false,is_published:true }
   const [form, setForm] = useState<any>(blankForm)
   const showMsg = (text:string,type='success') => { setMsg({text,type}); setTimeout(()=>setMsg({text:'',type:''}),4000) }
-  useEffect(()=>{ fetchJobs() },[])
+  useEffect(()=>{ fetchJobs(); fetch('/api/categories').then(r=>r.json()).then(d=>setCategories(d.categories||[])) },[])
   async function fetchJobs() {
     setLoading(true)
     const res = await fetch('/api/admin/jobs')
@@ -24,7 +25,7 @@ export default function AdminJobsPage() {
       salary_max: job.salary_max||'', qualification: job.qualification||'', age_text: job.age_text||'',
       exam_date: job.exam_date||'', apply_link: job.apply_link||'', notification_pdf: job.notification_pdf||'',
       official_website: job.official_website||'', selection_process: job.selection_process||'',
-      description: job.description||'', notify_text: job.notify_text||'Apply Now',
+      description: job.description||'', notify_text: job.notify_text||'Apply Now', category_id: job.category_id||'',
       is_new: !!job.is_new, is_hot: !!job.is_hot, is_published: !!job.is_published
     })
     setShowForm(true)
@@ -67,6 +68,7 @@ export default function AdminJobsPage() {
               <div key={f}><label style={lS}>{l}</label><input type={f==='last_date'?'date':'text'} required={(l as string).includes('*')} value={(form as any)[f]} onChange={e=>setForm((fm:any)=>({...fm,[f]:e.target.value}))} placeholder={p} style={iS}/></div>
             ))}
             <div><label style={lS}>Notify Button</label><select value={form.notify_text} onChange={e=>setForm((f:any)=>({...f,notify_text:e.target.value}))} style={{...iS,cursor:'pointer'}}>{['Apply Now','Notification Out','Coming Soon','Admit Card Out','Result Out','Answer Key Out'].map(n=><option key={n}>{n}</option>)}</select></div>
+            <div><label style={lS}>Category *</label><select required value={form.category_id} onChange={e=>setForm((f:any)=>({...f,category_id:e.target.value}))} style={{...iS,cursor:'pointer'}}><option value="">-- Select Category --</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           </div>
           <label style={lS}>Selection Process</label><input value={form.selection_process} onChange={e=>setForm((f:any)=>({...f,selection_process:e.target.value}))} placeholder="Tier-I -> Tier-II -> Document Verification" style={iS}/>
           <label style={lS}>Full Description</label><textarea value={form.description} onChange={e=>setForm((f:any)=>({...f,description:e.target.value}))} placeholder="Job ki poori details..." style={{...iS,height:90,resize:'vertical'}}/>

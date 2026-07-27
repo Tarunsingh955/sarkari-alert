@@ -17,8 +17,9 @@ async function getResults(searchParams: any) {
   return { results: data || [], total: count || 0 }
 }
 
-export default async function ResultPage({ searchParams }: { searchParams: any }) {
-  const { results, total } = await getResults(searchParams)
+export default async function ResultPage({ searchParams }: { searchParams: Promise<any> }) {
+  const sp = await searchParams
+  const { results, total } = await getResults(sp)
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#fff' }}>
       <Header />
@@ -30,7 +31,7 @@ export default async function ResultPage({ searchParams }: { searchParams: any }
         <AdBanner position="header" />
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 16, marginBottom: 16, border: '1px solid #334155' }}>
           <form method="GET">
-            <input name="search" defaultValue={searchParams.search || ''} placeholder="Search results..." style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+            <input name="search" defaultValue={sp.search || ''} placeholder="Search results..." style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
           </form>
         </div>
         <div style={{ color: '#64748b', fontSize: 13, marginBottom: 12 }}>{total} results available</div>

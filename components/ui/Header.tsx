@@ -1,37 +1,53 @@
 'use client'
 import { useState, useEffect } from 'react'
 const NAV = [{href:'/',label:'Home'},{href:'/jobs',label:'Sarkari Jobs'},{href:'/admit-card',label:'Admit Card'},{href:'/result',label:'Result'},{href:'/previous-papers',label:'Papers'},{href:'/news',label:'News'},{href:'/current-affairs',label:'Current Affairs'},{href:'/resume',label:'Resume'}]
-const FALLBACK_TICKER = "BREAKING: SSC CGL 2025 - 17727 Posts | Railway NTPC 11558 Posts | UP Police 60244 Posts | Bihar Police 21391 Posts | SBI Clerk 13735 Posts"
+const FALLBACK_ITEMS = ["SSC CGL 2025 - 17727 Posts", "Railway NTPC 11558 Posts", "UP Police 60244 Posts", "Bihar Police 21391 Posts", "SBI Clerk 13735 Posts"]
 
 export default function Header() {
   const [menuOpen,setMenuOpen]=useState(false)
-  const [tickerText, setTickerText] = useState(FALLBACK_TICKER)
+  const [tickerItems, setTickerItems] = useState<string[]>(FALLBACK_ITEMS)
 
   useEffect(() => {
     let cancelled = false
-    async function loadLatestJobs() {
+    async function loadTicker() {
       try {
-        const res = await fetch('/api/jobs?sort=newest&limit=5')
-        const data = await res.json()
-        const jobs = data.jobs || []
-        if (!jobs.length) return
-        const parts = jobs.map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
-        const text = `BREAKING: ${parts.join(' | ')}`
-        if (!cancelled) setTickerText(text)
+        const [jobsRes, msgRes] = await Promise.all([
+          fetch('/api/jobs?sort=newest&limit=5'),
+          fetch('/api/ticker').catch(() => null),
+        ])
+        const jobsData = await jobsRes.json()
+        const jobs = jobsData.jobs || []
+        const jobItems = jobs.map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
+
+        let customItems: string[] = []
+        if (msgRes && msgRes.ok) {
+          const msgData = await msgRes.json()
+          customItems = (msgData.messages || []).map((m: any) => m.message)
+        }
+
+        const combined = [...customItems, ...jobItems]
+        if (combined.length && !cancelled) setTickerItems(combined)
       } catch {
       }
     }
-    loadLatestJobs()
+    loadTicker()
     return () => { cancelled = true }
   }, [])
+
+  const renderItems = [...tickerItems, ...tickerItems] // duplicated for seamless loop
 
   return (
     <header style={{background:'#0f172a',borderBottom:'2px solid #f59e0b',position:'sticky',top:0,zIndex:200,boxShadow:'0 2px 20px rgba(0,0,0,0.5)'}}>
       <div style={{background:'#f59e0b',padding:'3px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',overflow:'hidden'}}>
         <div className="ticker-viewport" style={{flex:1,overflow:'hidden',position:'relative'}}>
-          <div className="ticker-track" style={{display:'flex',whiteSpace:'nowrap',width:'max-content'}}>
-            <span style={{fontSize:12,color:'#000',fontWeight:600,paddingRight:60}}>{tickerText}</span>
-            <span style={{fontSize:12,color:'#000',fontWeight:600,paddingRight:60}}>{tickerText}</span>
+          <div className="ticker-track" style={{display:'flex',whiteSpace:'nowrap',width:'max-content',alignItems:'center'}}>
+            <span style={{fontSize:12,color:'#000',fontWeight:800,paddingRight:10,flexShrink:0}}>BREAKING:</span>
+            {renderItems.map((item, idx) => (
+              <span key={idx} style={{display:'flex',alignItems:'center',flexShrink:0}}>
+                <span style={{fontSize:12,color:'#000',fontWeight:600,paddingRight:28}}>{item}</span>
+                <span style={{width:6,height:6,borderRadius:'50%',background:'#000',opacity:0.4,marginRight:28,flexShrink:0}} />
+              </span>
+            ))}
           </div>
         </div>
         <a href="/admin" style={{background:'rgba(0,0,0,0.2)',border:'1px solid rgba(0,0,0,0.3)',padding:'2px 8px',borderRadius:4,fontSize:11,fontWeight:700,textDecoration:'none',color:'#000',marginLeft:12,flexShrink:0}}>Admin</a>

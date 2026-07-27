@@ -29,8 +29,9 @@ async function getJobs(searchParams: any) {
   return { jobs: data || [], total: count || 0, page, pages: Math.ceil((count||0)/limit) }
 }
 
-export default async function JobsPage({ searchParams }: { searchParams: any }) {
-  const { jobs, total, page, pages } = await getJobs(searchParams)
+export default async function JobsPage({ searchParams }: { searchParams: Promise<any> }) {
+  const sp = await searchParams
+  const { jobs, total, page, pages } = await getJobs(sp)
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#fff' }}>
       <Header />
@@ -43,29 +44,29 @@ export default async function JobsPage({ searchParams }: { searchParams: any }) 
         {/* Filters */}
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 16, marginBottom: 14, border: '1px solid #334155' }}>
           <form method="GET" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input name="search" defaultValue={searchParams.search || ''} placeholder="🔍 Search — SSC, Railway, Police, Bank, Teacher..." style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+            <input name="search" defaultValue={sp.search || ''} placeholder="Search — SSC, Railway, Police, Bank, Teacher..." style={{ width: '100%', padding: '12px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, color: '#64748b', alignSelf: 'center' }}>Category:</span>
-              <a href="/jobs" style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: !searchParams.category ? '#f59e0b' : '#0f172a', border: `1px solid ${!searchParams.category ? '#f59e0b' : '#334155'}`, color: !searchParams.category ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: !searchParams.category ? 700 : 400 }}>Sab</a>
-              {CATEGORIES.map(c => <a key={c} href={`/jobs?category=${c.toLowerCase()}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: searchParams.category === c.toLowerCase() ? '#f59e0b' : '#0f172a', border: `1px solid ${searchParams.category === c.toLowerCase() ? '#f59e0b' : '#334155'}`, color: searchParams.category === c.toLowerCase() ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: searchParams.category === c.toLowerCase() ? 700 : 400 }}>{c}</a>)}
+              <a href="/jobs" style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: !sp.category ? '#f59e0b' : '#0f172a', border: `1px solid ${!sp.category ? '#f59e0b' : '#334155'}`, color: !sp.category ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: !sp.category ? 700 : 400 }}>Sab</a>
+              {CATEGORIES.map(c => <a key={c} href={`/jobs?category=${c.toLowerCase()}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: sp.category === c.toLowerCase() ? '#f59e0b' : '#0f172a', border: `1px solid ${sp.category === c.toLowerCase() ? '#f59e0b' : '#334155'}`, color: sp.category === c.toLowerCase() ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: sp.category === c.toLowerCase() ? 700 : 400 }}>{c}</a>)}
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, color: '#64748b', alignSelf: 'center' }}>State:</span>
-              {STATES.map(s => <a key={s} href={`/jobs?state=${encodeURIComponent(s)}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: searchParams.state === s ? '#10b981' : '#0f172a', border: `1px solid ${searchParams.state === s ? '#10b981' : '#334155'}`, color: searchParams.state === s ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: searchParams.state === s ? 700 : 400 }}>{s}</a>)}
+              {STATES.map(s => <a key={s} href={`/jobs?state=${encodeURIComponent(s)}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: sp.state === s ? '#10b981' : '#0f172a', border: `1px solid ${sp.state === s ? '#10b981' : '#334155'}`, color: sp.state === s ? '#000' : '#94a3b8', textDecoration: 'none', fontWeight: sp.state === s ? 700 : 400 }}>{s}</a>)}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontSize: 11, color: '#64748b' }}>Sort:</span>
-              {[['newest','Newest'],['deadline','Last Date'],['popular','Popular']].map(([v,l]) => <a key={v} href={`/jobs?sort=${v}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: (searchParams.sort||'newest')===v ? '#8b5cf6' : '#0f172a', border: `1px solid ${(searchParams.sort||'newest')===v ? '#8b5cf6' : '#334155'}`, color: (searchParams.sort||'newest')===v ? '#fff' : '#94a3b8', textDecoration: 'none' }}>{l}</a>)}
+              {[['newest','Newest'],['deadline','Last Date'],['popular','Popular']].map(([v,l]) => <a key={v} href={`/jobs?sort=${v}`} style={{ padding: '5px 14px', borderRadius: 20, fontSize: 12, background: (sp.sort||'newest')===v ? '#8b5cf6' : '#0f172a', border: `1px solid ${(sp.sort||'newest')===v ? '#8b5cf6' : '#334155'}`, color: (sp.sort||'newest')===v ? '#fff' : '#94a3b8', textDecoration: 'none' }}>{l}</a>)}
               <button type="submit" style={{ padding: '5px 16px', background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 20, color: '#000', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Search</button>
             </div>
           </form>
         </div>
-        {(searchParams.category || searchParams.state || searchParams.search) && (
+        {(sp.category || sp.state || sp.search) && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
             <span style={{ fontSize: 12, color: '#64748b' }}>Active:</span>
-            {searchParams.category && <span style={{ background: '#f59e0b20', color: '#f59e0b', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>Category: {searchParams.category}</span>}
-            {searchParams.state && <span style={{ background: '#10b98120', color: '#10b981', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>State: {searchParams.state}</span>}
-            {searchParams.search && <span style={{ background: '#8b5cf620', color: '#8b5cf6', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>Search: "{searchParams.search}"</span>}
+            {sp.category && <span style={{ background: '#f59e0b20', color: '#f59e0b', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>Category: {sp.category}</span>}
+            {sp.state && <span style={{ background: '#10b98120', color: '#10b981', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>State: {sp.state}</span>}
+            {sp.search && <span style={{ background: '#8b5cf620', color: '#8b5cf6', fontSize: 12, padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>Search: "{sp.search}"</span>}
             <a href="/jobs" style={{ color: '#ef4444', fontSize: 12, textDecoration: 'none' }}>✕ Clear</a>
           </div>
         )}
@@ -80,7 +81,7 @@ export default async function JobsPage({ searchParams }: { searchParams: any }) 
         </div>
         {!jobs.length && (
           <div style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>No Jobs</div>
             <p style={{ fontSize: 16, marginBottom: 8 }}>Koi job nahi mila!</p>
             <a href="/jobs" style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 8, color: '#000', fontWeight: 700, textDecoration: 'none', display: 'inline-block', marginTop: 8 }}>Sab Jobs Dekho</a>
           </div>
