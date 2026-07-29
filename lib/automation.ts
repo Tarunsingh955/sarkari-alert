@@ -2,13 +2,12 @@ import { supabaseAdmin } from './supabase'
 import { generateUniqueSlug } from './seo'
 import { sendTelegramAlert, sendEmailAlerts, sendWhatsAppAlert, sendPushNotification } from './notifications'
 import { runEmploymentNewsScrape } from './scraper'
-import { classifyJobCategory } from './classify'
+import { classifyJobCategory, classifyItemType } from './classify'
 
 export async function runAutomation() {
   console.log('Automation started:', new Date().toISOString())
-  const { data: sources, error: sourcesError } = await supabaseAdmin.from('sources').select('*').eq('is_active', true)
-console.log('SOURCES QUERY:', JSON.stringify({ count: sources?.length, error: sourcesError, names: sources?.map((s: any) => s.name) }))
-if (!sources?.length) return { fetched: 0 }
+  const { data: sources } = await supabaseAdmin.from('sources').select('*').eq('is_active', true)
+  if (!sources?.length) return { fetched: 0 }
   let totalFetched = 0
   for (const source of sources) {
     try {
@@ -34,22 +33,27 @@ async function scrapeRSS(source: any): Promise<number> {
   const feed = await parser.parseURL(source.url)
   let count = 0
 
-  let itemType: 'job' | 'news' | 'current_affairs' = 'job'
-  if (source.category === 'news') itemType = 'news'
-  if (source.category === 'current_affairs') itemType = 'current_affairs'
+  const fixedType: 'news' | 'current_affairs' | null =
+    source.category === 'news' ? 'news' :
+    source.category === 'current_affairs' ? 'current_affairs' : null
 
   for (const item of (feed.items || []).slice(0, 15)) {
+    const title = item.title || ''
+    // If the source is explicitly tagged as news/current_affairs, keep that.
+    // Otherwise (a mixed job-alert feed), detect admit_card/result/answer_key/job from the title.
+    const itemType: 'job' | 'news' | 'current_affairs' | 'admit_card' | 'result' | 'answer_key' =
+      fixedType || classifyItemType(title)
+
     const { data: existing } = await supabaseAdmin.from('automation_queue').select('id').eq('source_url', item.link || '').eq('type', itemType).maybeSingle()
     if (existing) continue
-    const slug = generateUniqueSlug(item.title || 'untitled')
     const rawContent = item.content || item.contentSnippet || ''
 
     await supabaseAdmin.from('automation_queue').insert({
-      title: item.title || '',
+      title,
       data: {
-        title: item.title,
+        title,
         content: rawContent,
-        question: `${item.title}?`,
+        question: `${title}?`,
         answer: rawContent.slice(0, 500),
         link: item.link,
         pub_date: item.pubDate,
@@ -65,9 +69,6 @@ async function scrapeRSS(source: any): Promise<number> {
   return count
 }
 
-// Calls Claude (Haiku - fast & cheap) to turn a raw news title+content into a
-// proper 4-option MCQ. Returns null if generation fails, so the caller can
-// fall back gracefully instead of saving garbage data.
 async function generateMCQFromNews(title: string, content: string): Promise<{
   question: string
   option_a: string
@@ -144,6 +145,35 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in this exact s
   }
 }
 
+// For third-party aggregator feeds, the RSS link points to their own article,
+// not the official government page. This fetches that article and pulls out
+// the first outbound link to a recognizable official domain (.gov.in, .nic.in,
+// or a known state/board portal), falling back to the article link if none found.
+export async function extractOfficialLink(articleUrl: string): Promise<string> {
+  if (!articleUrl) return articleUrl
+  try {
+    const res = await fetch(articleUrl, { signal: AbortSignal.timeout(8000) })
+    if (!res.ok) return articleUrl
+    const html = await res.text()
+
+    // Collect candidate URLs from BOTH real <a href> links AND bare URLs
+    // that appear as plain text in the article body (some sites just type
+    // out "link: https://..." instead of making it clickable).
+    const hrefUrls = [...html.matchAll(/href="(https?:\/\/[^"]+)"/gi)].map(m => m[1])
+    const bareUrls = [...html.matchAll(/(https?:\/\/[a-z0-9.-]+\.(?:gov\.in|nic\.in|ac\.in|org\.in)[^\s"'<>]*)/gi)].map(m => m[1])
+    const allCandidates = [...hrefUrls, ...bareUrls]
+
+    const officialPatterns = [/\.gov\.in/i, /\.nic\.in/i, /\.ac\.in/i, /\.org\.in/i, /rrb[a-z]*\.(com|gov\.in)/i, /ibps\.in/i, /sbi\.co\.in/i]
+    const officialLink = allCandidates.find(href =>
+      officialPatterns.some(p => p.test(href)) &&
+      !href.includes('sarkarinaukrijobalert.com')
+    )
+    return officialLink || articleUrl
+  } catch {
+    return articleUrl
+  }
+}
+
 export async function approveQueueItem(queueId: string, adminId: string) {
   const { data: item } = await supabaseAdmin.from('automation_queue').select('*').eq('id', queueId).single()
   if (!item) throw new Error('Item not found')
@@ -175,6 +205,35 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     if (job) {
       await Promise.allSettled([sendTelegramAlert(job), sendEmailAlerts(job), sendWhatsAppAlert(job), sendPushNotification(job.title, `${job.total_posts} Posts available!`, `/jobs/${job.slug}`)])
     }
+  } else if (item.type === 'admit_card') {
+    const officialLink = await extractOfficialLink(d.link || '')
+    await supabaseAdmin.from('admit_cards').insert({
+      title: d.title || item.title,
+      slug,
+      release_date: new Date().toISOString().split('T')[0],
+      download_link: officialLink,
+      details: d.content || '',
+      is_active: true,
+    })
+  } else if (item.type === 'result') {
+    const officialLink = await extractOfficialLink(d.link || '')
+    await supabaseAdmin.from('results').insert({
+      title: d.title || item.title,
+      slug,
+      release_date: new Date().toISOString().split('T')[0],
+      download_link: officialLink,
+      details: d.content || '',
+      is_active: true,
+    })
+  } else if (item.type === 'answer_key') {
+    const officialLink = await extractOfficialLink(d.link || '')
+    await supabaseAdmin.from('answer_keys').insert({
+      title: d.title || item.title,
+      slug,
+      release_date: new Date().toISOString().split('T')[0],
+      download_link: officialLink,
+      is_active: true,
+    })
   } else if (item.type === 'current_affairs') {
     const now = new Date()
     const mcq = await generateMCQFromNews(d.title || item.title, d.content || d.answer || '')
@@ -195,8 +254,6 @@ export async function approveQueueItem(queueId: string, adminId: string) {
         is_active: true,
       })
     } else {
-      // Fallback: save without proper options rather than losing the item entirely.
-      // Admin can manually fix it in the Current Affairs admin page later.
       await supabaseAdmin.from('current_affairs').insert({
         question: d.question || d.title || item.title,
         answer: d.answer || d.content || '',
@@ -207,6 +264,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       })
     }
   } else {
+    // 'news' falls back here
     const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30)
     await supabaseAdmin.from('news').insert({
       title: d.title || item.title,

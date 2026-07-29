@@ -18,3 +18,13 @@ export function classifyJobCategory(title: string, department?: string): string 
   }
   return 'central' // fallback: generic central govt department/ministry postings
 }
+
+// Detects whether a mixed-feed news item is actually an admit card, result,
+// answer key, or a plain job notification — based on common title phrasing.
+export function classifyItemType(title: string): 'admit_card' | 'result' | 'answer_key' | 'job' {
+  const t = title || ''
+  if (/admit card|hall ticket|call letter|exam city|e-admit/i.test(t)) return 'admit_card'
+  if (/\bresult\b|merit list|scorecard|score card|cut ?off|marks\b/i.test(t)) return 'result'
+  if (/answer key/i.test(t)) return 'answer_key'
+  return 'job'
+}

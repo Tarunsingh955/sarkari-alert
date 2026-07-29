@@ -9,7 +9,7 @@ export default function AdminSourcesPage() {
   const showMsg = (text:string,type='success') => { setMsg({text,type}); setTimeout(()=>setMsg({text:'',type:''}),4000) }
   useEffect(()=>{ fetchSources() },[])
   async function fetchSources() { setLoading(true); const res=await fetch('/api/admin/sources').catch(()=>({json:async()=>({})})); const data=await (res as any).json?.()??{}; setSources(data.sources||[]); setLoading(false) }
-  async function runAuto() { setRunning(true); showMsg('Automation chal rahi hai...'); try{ const r=await fetch('/api/automation'); const d=await r.json(); showMsg(`Done! ${d.fetched||0} new items queue mein.`) }catch{ showMsg('Error running automation','error') } setRunning(false) }
+ async function runAuto() { setRunning(true); showMsg('Automation chal rahi hai...'); try{ const r=await fetch('/api/admin/run-automation',{method:'POST'}); const d=await r.json(); showMsg(`Done! ${d.fetched||0} new items queue mein.`) }catch{ showMsg('Error running automation','error') } setRunning(false) }
   async function toggleSource(id:string,active:boolean) { await fetch('/api/admin/sources',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,is_active:active})}); fetchSources() }
   async function deleteSource(id:string) { if(!confirm('Delete?'))return; await fetch('/api/admin/sources',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}); fetchSources() }
   async function addSource(e:React.FormEvent) {
