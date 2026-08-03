@@ -52,6 +52,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
 	.then(() => {})
 
   const days = daysLeft(job.last_date)
+  const hasRealApplyLink = job.apply_link && !job.apply_link.includes('employmentnews.gov.in') && !job.apply_link.includes('sarkarinaukrijobalert.com') && !job.apply_link.includes('rojgarsamachar.gov.in')
   const urgent = days <= 7 && days > 0
   const catColor = job.categories?.color || '#f59e0b'
   const jobSchema = generateJobSchema(job)
@@ -103,8 +104,8 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
           <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>🔗 Important Links</h2>
           {[
             job.notification_pdf && { label: 'Official Notification PDF', href: job.notification_pdf, text: 'Download PDF', color: '#3b82f6' },
-            job.apply_link && { label: 'Online Application', href: job.apply_link, text: 'Apply Now →', color: '#f59e0b', dark: true },
-            job.official_website && { label: 'Official Website', href: job.official_website, text: 'Visit →', color: '#10b981' },
+            job.apply_link && { label: hasRealApplyLink ? 'Online Application' : 'Official Notification', href: job.apply_link, text: hasRealApplyLink ? 'Apply Now →' : 'View Notification →', color: '#f59e0b', dark: true },
+            job.official_website && job.official_website !== job.apply_link && { label: hasRealApplyLink ? 'Official Website' : 'Source', href: job.official_website, text: hasRealApplyLink ? 'Visit →' : 'View →', color: '#10b981' },
             job.admit_cards?.[0] && { label: 'Admit Card', href: `/jobs/${job.slug}/admit-card`, text: 'Download →', color: '#8b5cf6' },
             job.results?.[0] && { label: 'Result', href: `/jobs/${job.slug}/result`, text: 'Check →', color: '#10b981' },
             job.answer_keys?.[0] && { label: 'Answer Key', href: `/jobs/${job.slug}/answer-key`, text: 'Download →', color: '#ec4899' },
@@ -154,11 +155,11 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         </div>
         <AdBanner position="job_detail_bottom" />
         <div style={{ textAlign: 'center', marginTop: 8 }}>
-          <a href={job.apply_link || job.official_website || '#'} target="_blank" rel="noreferrer"
+         <a href={job.apply_link || job.official_website || '#'} target="_blank" rel="noreferrer"
             style={{ display: 'inline-block', padding: '16px 48px', background: 'linear-gradient(135deg,#f59e0b,#d97706)', borderRadius: 12, color: '#000', fontWeight: 800, fontSize: 18, textDecoration: 'none' }}>
-            Apply Now — Official Website →
+            {hasRealApplyLink ? 'Apply Now — Official Website →' : 'View Full Notification →'}
           </a>
-          <p style={{ fontSize: 12, color: '#475569', marginTop: 10 }}>Sirf official government website se apply karein</p>
+          <p style={{ fontSize: 12, color: '#475569', marginTop: 10 }}>{hasRealApplyLink ? 'Sirf official government website se apply karein' : 'Direct official link abhi available nahi hai — poori notification padhkar khud official website dhoondh kar apply karein'}</p>
         </div>
       </main>
       <Footer />
