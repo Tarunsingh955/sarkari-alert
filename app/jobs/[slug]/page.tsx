@@ -15,7 +15,7 @@ export async function generateStaticParams() {
   return (data || []).map(j => ({ slug: j.slug }))
 }
 
- export async function generateMetadata(
+export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params
@@ -32,8 +32,14 @@ export async function generateStaticParams() {
 
 function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) }
 
+const NON_OFFICIAL_LINK_MARKERS = [
+  'employmentnews.gov.in',
+  'sarkarinaukrijobalert.com',
+  'rojgarsamachar.gov.in',
+  'sahisarkarijobs.in',
+]
 
- export default async function JobDetailPage(
+export default async function JobDetailPage(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
@@ -45,14 +51,14 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
     .eq('is_published', true)
     .single()
 
-  if (!job) notFound() 
-  
+  if (!job) notFound()
+
   supabaseAdmin
-	.rpc('increment_job_views', { job_slug: slug })
-	.then(() => {})
+    .rpc('increment_job_views', { job_slug: slug })
+    .then(() => {})
 
   const days = daysLeft(job.last_date)
-  const hasRealApplyLink = job.apply_link && !job.apply_link.includes('employmentnews.gov.in') && !job.apply_link.includes('sarkarinaukrijobalert.com') && !job.apply_link.includes('rojgarsamachar.gov.in')
+  const hasRealApplyLink = job.apply_link && !NON_OFFICIAL_LINK_MARKERS.some(marker => job.apply_link.includes(marker))
   const urgent = days <= 7 && days > 0
   const catColor = job.categories?.color || '#f59e0b'
   const jobSchema = generateJobSchema(job)
@@ -77,7 +83,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
                 <span style={{ background: catColor + '22', color: catColor, fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>{job.categories?.icon} {job.categories?.name}</span>
                 {job.is_new && <span style={{ background: '#10b98120', color: '#10b981', fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>NEW</span>}
-                {job.is_hot && <span style={{ background: '#ef444420', color: '#ef4444', fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>🔥 HOT</span>}
+                {job.is_hot && <span style={{ background: '#ef444420', color: '#ef4444', fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>HOT</span>}
                 {job.is_sponsored && <span style={{ background: '#8b5cf620', color: '#8b5cf6', fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700 }}>SPONSORED</span>}
               </div>
               <h1 style={{ fontSize: 'clamp(20px,4vw,28px)', fontWeight: 900, color: '#f1f5f9', marginBottom: 6 }}>{job.title}</h1>
@@ -92,7 +98,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         <AdBanner position="job_detail_top" />
         {/* Info Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 12, marginBottom: 20 }}>
-          {[['📋 Total Posts', job.total_posts || 'N/A'], ['💰 Salary', job.salary_text || 'As per rules'], ['🎓 Qualification', job.qualification || 'N/A'], ['🎂 Age Limit', job.age_text || 'N/A'], ['📍 State', job.states?.name || 'All India'], ['📝 Exam Date', job.exam_date || 'TBA']].map(([k, v]) => (
+          {[['Total Posts', job.total_posts || 'N/A'], ['Salary', job.salary_text || 'As per rules'], ['Qualification', job.qualification || 'N/A'], ['Age Limit', job.age_text || 'N/A'], ['State', job.states?.name || 'All India'], ['Exam Date', job.exam_date || 'TBA']].map(([k, v]) => (
             <div key={k} style={{ background: '#1e293b', borderRadius: 10, padding: '14px 16px', border: '1px solid #334155' }}>
               <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase' }}>{k}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{v}</div>
@@ -101,7 +107,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         </div>
         {/* Important Links */}
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>🔗 Important Links</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>Important Links</h2>
           {[
             job.notification_pdf && { label: 'Official Notification PDF', href: job.notification_pdf, text: 'Download PDF', color: '#3b82f6' },
             job.apply_link && { label: hasRealApplyLink ? 'Online Application' : 'Official Notification', href: job.apply_link, text: hasRealApplyLink ? 'Apply Now →' : 'View Notification →', color: '#f59e0b', dark: true },
@@ -122,7 +128,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         {/* Selection Process */}
         {job.selection_process && (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>📋 Selection Process</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>Selection Process</h2>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {job.selection_process.split('→').map((s: string, i: number) => (
                 <span key={i} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 20, padding: '5px 14px', fontSize: 13, color: '#cbd5e1' }}>{i + 1}. {s.trim()}</span>
@@ -133,13 +139,13 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         {/* Description */}
         {job.description && (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>📄 Job Details</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 12 }}>Job Details</h2>
             <div style={{ color: '#cbd5e1', lineHeight: 1.8, fontSize: 14, whiteSpace: 'pre-wrap' }}>{job.description}</div>
           </div>
         )}
         {/* FAQ Section */}
         <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 20, border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>❓ Frequently Asked Questions</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: '#f59e0b', marginBottom: 16 }}>Frequently Asked Questions</h2>
           {[
             [`${job.title} mein apply kaise karein?`, `${job.official_website || 'Official website'} par jaayein aur Apply Online click karein. Last date ${new Date(job.last_date).toLocaleDateString('en-IN')} hai.`],
             [`${job.title} ki age limit kya hai?`, job.age_text || 'Kripya official notification check karein age limit ke liye.'],
@@ -155,7 +161,7 @@ function daysLeft(d: string) { return Math.ceil((new Date(d).getTime() - Date.no
         </div>
         <AdBanner position="job_detail_bottom" />
         <div style={{ textAlign: 'center', marginTop: 8 }}>
-         <a href={job.apply_link || job.official_website || '#'} target="_blank" rel="noreferrer"
+          <a href={job.apply_link || job.official_website || '#'} target="_blank" rel="noreferrer"
             style={{ display: 'inline-block', padding: '16px 48px', background: 'linear-gradient(135deg,#f59e0b,#d97706)', borderRadius: 12, color: '#000', fontWeight: 800, fontSize: 18, textDecoration: 'none' }}>
             {hasRealApplyLink ? 'Apply Now — Official Website →' : 'View Full Notification →'}
           </a>
