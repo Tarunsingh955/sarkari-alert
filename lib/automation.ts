@@ -93,23 +93,32 @@ function findOfficialLinkIn(html: string, articleHost: string): string | null {
   // (some sites type "Apply at: https://krcl.co.in" without making it a
   // clickable link) — both count as candidates.
   const hrefUrls = [...html.matchAll(/<a\s[^>]*href="(https?:\/\/[^"]+)"/gi)].map(m => m[1])
-  const bareUrls = [...html.matchAll(/(https?:\/\/[a-z0-9.-]+\.(?:gov\.in|nic\.in|co\.in|org\.in|ac\.in|res\.in|edu\.in|ind\.in)[^\s"'<>)]*)/gi)].map(m => m[1])
+  const bareUrls = [...html.matchAll(/(https?:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:\.[a-z]{2})?[^\s"'<>)]*)/gi)].map(m => m[1])
   const allCandidates = [...hrefUrls, ...bareUrls]
 
-  // Almost every genuine Indian government/PSU/board site ends in one of
-  // these .in suffixes. Requiring this (instead of blocklisting every
-  // possible junk domain — social shares, theme credits, etc, which is an
-  // endless whack-a-mole) gives much higher precision: generic .com/.org
-  // sites (social media, blogs, theme boilerplate) are never accidentally
-  // picked as "official" even if they slip past the blocklist below.
-  const indianOfficialSuffixes = ['.gov.in', '.nic.in', '.co.in', '.org.in', '.ac.in', '.res.in', '.edu.in', '.ind.in']
-  return allCandidates.find(href => {
+  const validCandidates = allCandidates.filter(href => {
     let candidateHost = ''
     try { candidateHost = new URL(href).hostname.replace(/^www\./, '') } catch { return false }
     if (candidateHost === articleHost) return false
     if (NEVER_OFFICIAL.some(blocked => candidateHost === blocked || candidateHost.endsWith('.' + blocked))) return false
-    return indianOfficialSuffixes.some(suffix => candidateHost.endsWith(suffix))
-  }) || null
+    return true
+  })
+
+  // Tier 1 (high confidence): almost every genuine Indian government/PSU/
+  // board site ends in one of these suffixes — prefer these first.
+  const indianOfficialSuffixes = ['.gov.in', '.nic.in', '.co.in', '.org.in', '.ac.in', '.res.in', '.edu.in', '.ind.in']
+  const tier1 = validCandidates.find(href => {
+    const host = new URL(href).hostname.replace(/^www\./, '')
+    return indianOfficialSuffixes.some(suffix => host.endsWith(suffix))
+  })
+  if (tier1) return tier1
+
+  // Tier 2 (lower confidence fallback): some legitimate official orgs use
+  // plain .org/.com/.aero domains (e.g. madcindia.org, aai.aero) instead of
+  // an India-specific TLD. Since it already passed the blocklist above,
+  // take the first remaining external link as a best-effort guess rather
+  // than giving up and pointing back at the aggregator article.
+  return validCandidates[0] || null
 }
 
 // Prefer searching the RSS item's own article-body content first (no theme
