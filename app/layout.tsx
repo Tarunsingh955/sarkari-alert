@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Noto_Sans } from 'next/font/google'
 import Script from 'next/script'
+import ThemeProvider from '@/components/ui/ThemeProvider'
 
 const notoSans = Noto_Sans({ subsets: ['latin'], weight: ['400','600','700','900'], display: 'swap' })
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body className={notoSans.className} style={{ background: '#0f172a', color: '#fff', margin: 0 }}>
+        <ThemeProvider>
         {children}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
@@ -37,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <Script async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`} crossOrigin="anonymous" strategy="afterInteractive" />
         )}
-        <Script id="sw" strategy="afterInteractive">{`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}`}</Script>
+        </ThemeProvider>
       </body>
     </html>
   )
