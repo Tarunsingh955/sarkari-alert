@@ -1,7 +1,20 @@
 // Central color palette for both themes. Every page will eventually pull
 // its colors from here (via useTheme()) instead of hardcoding hex values,
 // so switching theme = swapping this object, not editing every file.
-export const themes = {
+export type ThemeColors = {
+  bg: string
+  cardBg: string
+  cardBorder: string
+  cardShadow: string
+  textPrimary: string
+  textSecondary: string
+  textMuted: string
+  accent: string
+  accentDark: string
+  inputBg: string
+}
+
+export const themes: Record<'dark' | 'light', ThemeColors> = {
   dark: {
     bg: '#0f172a',
     cardBg: '#1e293b',
@@ -26,7 +39,6 @@ export const themes = {
     accentDark: '#d97706',
     inputBg: '#f1f5f9',
   },
-} as const
+}
 
 export type ThemeName = keyof typeof themes
-export type ThemeColors = typeof themes.dark
