@@ -11,7 +11,16 @@ import type { Metadata } from 'next'
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  const { data } = await supabaseAdmin.from('jobs').select('slug').eq('is_published', true).limit(200)
+  // Only pre-build the most recent jobs at build time to avoid overloading
+  // Supabase with hundreds of parallel queries (which was causing random
+  // build timeouts). Older/other jobs still work fine — they're generated
+  // on-demand on first visit and cached via ISR (revalidate above).
+  const { data } = await supabaseAdmin
+    .from('jobs')
+    .select('slug')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(30)
   return (data || []).map(j => ({ slug: j.slug }))
 }
 
