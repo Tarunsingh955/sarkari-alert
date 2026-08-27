@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Script from 'next/script'
 import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
+import { useTheme } from '@/components/ui/ThemeProvider'
 
 const PLANS = [
   { type: 'premium_monthly', name: 'Monthly', price: 49, period: '/month', highlight: false },
@@ -18,6 +19,7 @@ const FEATURES = [
 ]
 
 export default function MembershipPage() {
+  const { colors } = useTheme()
   const [loading, setLoading] = useState<string | null>(null)
   const [msg, setMsg] = useState({ text: '', type: '' })
 
@@ -74,24 +76,24 @@ export default function MembershipPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a', color: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: colors.bg, color: colors.textPrimary }}>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       <Header />
       <main style={{ maxWidth: 900, margin: '0 auto', padding: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#f1f5f9', marginBottom: 6 }}>⭐ SarkariAlert Premium</h1>
-          <p style={{ color: '#64748b', fontSize: 14 }}>Apni job preparation ko next level pe le jaayein</p>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: colors.textPrimary, marginBottom: 6 }}>⭐ SarkariAlert Premium</h1>
+          <p style={{ color: colors.textMuted, fontSize: 14 }}>Apni job preparation ko next level pe le jaayein</p>
         </div>
 
         {msg.text && (
           <div style={{ background: msg.type === 'error' ? '#ef444420' : '#10b98120', border: `1px solid ${msg.type === 'error' ? '#ef444440' : '#10b98140'}`, borderRadius: 8, padding: '10px 16px', color: msg.type === 'error' ? '#ef4444' : '#34d399', fontSize: 13, marginBottom: 20, textAlign: 'center', fontWeight: 600 }}>{msg.text}</div>
         )}
 
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155', marginBottom: 24 }}>
-          <h3 style={{ color: '#f59e0b', fontSize: 14, marginBottom: 12 }}>Premium mein kya milta hai:</h3>
+        <div style={{ background: colors.cardBg, borderRadius: 12, padding: 20, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 1px 3px ${colors.cardShadow}`, marginBottom: 24 }}>
+          <h3 style={{ color: colors.accent, fontSize: 14, marginBottom: 12 }}>Premium mein kya milta hai:</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {FEATURES.map(f => (
-              <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: '#cbd5e1' }}>
+              <div key={f} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: colors.textSecondary }}>
                 <span style={{ color: '#10b981', flexShrink: 0 }}>✅</span>
                 <span>{f}</span>
               </div>
@@ -102,20 +104,21 @@ export default function MembershipPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16 }}>
           {PLANS.map(plan => (
             <div key={plan.type} style={{
-              background: '#1e293b', borderRadius: 14, padding: 24, textAlign: 'center',
-              border: plan.highlight ? '2px solid #f59e0b' : '1px solid #334155',
+              background: colors.cardBg, borderRadius: 14, padding: 24, textAlign: 'center',
+              border: plan.highlight ? `2px solid ${colors.accent}` : `1px solid ${colors.cardBorder}`,
+              boxShadow: `0 1px 3px ${colors.cardShadow}`,
               position: 'relative',
             }}>
               {plan.highlight && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: '#000', fontSize: 11, fontWeight: 800, padding: '3px 14px', borderRadius: 20 }}>BEST VALUE</div>
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: `linear-gradient(135deg,${colors.accent},${colors.accentDark})`, color: '#000', fontSize: 11, fontWeight: 800, padding: '3px 14px', borderRadius: 20 }}>BEST VALUE</div>
               )}
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>{plan.name}</div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#f59e0b' }}>₹{plan.price}<span style={{ fontSize: 13, color: '#64748b', fontWeight: 400 }}>{plan.period}</span></div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary, marginBottom: 8 }}>{plan.name}</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: colors.accent }}>₹{plan.price}<span style={{ fontSize: 13, color: colors.textMuted, fontWeight: 400 }}>{plan.period}</span></div>
               <button
                 onClick={() => handleBuy(plan.type)}
                 disabled={loading === plan.type}
                 style={{
-                  marginTop: 16, width: '100%', background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 8,
+                  marginTop: 16, width: '100%', background: `linear-gradient(135deg,${colors.accent},${colors.accentDark})`, border: 'none', borderRadius: 8,
                   padding: '12px 20px', color: '#000', fontWeight: 800, fontSize: 14, cursor: loading === plan.type ? 'default' : 'pointer',
                   opacity: loading === plan.type ? 0.6 : 1,
                 }}
@@ -126,7 +129,7 @@ export default function MembershipPage() {
           ))}
         </div>
 
-        <p style={{ textAlign: 'center', color: '#475569', fontSize: 12, marginTop: 20 }}>Secure payment powered by Razorpay. Login zaroori hai payment se pehle.</p>
+        <p style={{ textAlign: 'center', color: colors.textMuted, fontSize: 12, marginTop: 20 }}>Secure payment powered by Razorpay. Login zaroori hai payment se pehle.</p>
       </main>
       <Footer />
     </div>
