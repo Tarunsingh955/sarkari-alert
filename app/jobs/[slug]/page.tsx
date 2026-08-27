@@ -11,17 +11,13 @@ import type { Metadata } from 'next'
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  // Only pre-build the most recent jobs at build time to avoid overloading
-  // Supabase with hundreds of parallel queries (which was causing random
-  // build timeouts). Older/other jobs still work fine — they're generated
-  // on-demand on first visit and cached via ISR (revalidate above).
-  const { data } = await supabaseAdmin
-    .from('jobs')
-    .select('slug')
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .limit(30)
-  return (data || []).map(j => ({ slug: j.slug }))
+  // Intentionally pre-build zero pages. Build-time static generation was
+  // repeatedly timing out on random jobs due to slow/unstable Supabase
+  // connectivity during the Vercel build step. Every job page still works
+  // exactly the same for visitors — it's generated on the very first
+  // request and cached afterwards (revalidate = 3600 above), so this only
+  // changes when the page is built, not what visitors see.
+  return []
 }
 
 export async function generateMetadata(
