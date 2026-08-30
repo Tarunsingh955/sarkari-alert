@@ -8,7 +8,10 @@ export async function GET(req: NextRequest) {
   const admin = await getAdminUser(); if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { searchParams } = new URL(req.url)
   const page = Number(searchParams.get('page') || 1); const limit = 25
-  const { data, count } = await supabaseAdmin.from('jobs').select('*,categories(name,color),states(name)', { count: 'exact' }).order('created_at', { ascending: false }).range((page-1)*limit, page*limit-1)
+  const search = searchParams.get('search')
+  let query = supabaseAdmin.from('jobs').select('*,categories(name,color),states(name)', { count: 'exact' }).order('created_at', { ascending: false })
+  if (search) query = query.ilike('title', `%${search}%`)
+  const { data, count } = await query.range((page-1)*limit, page*limit-1)
   return NextResponse.json({ jobs: data || [], total: count || 0 })
 }
 

@@ -13,20 +13,11 @@ export default function Header() {
     let cancelled = false
     async function loadTicker() {
       try {
-        const [jobsRes, msgRes] = await Promise.all([
-          fetch('/api/jobs?sort=newest&limit=5'),
-          fetch('/api/ticker').catch(() => null),
-        ])
-        const jobsData = await jobsRes.json()
-        const jobs = jobsData.jobs || []
-        const jobItems = jobs.map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
-
-        let customItems: string[] = []
-        if (msgRes && msgRes.ok) {
-          const msgData = await msgRes.json()
-          customItems = (msgData.messages || []).map((m: any) => m.message)
-        }
-
+        const res = await fetch('/api/ticker')
+        if (!res.ok) return
+        const data = await res.json()
+        const customItems: string[] = (data.messages || []).map((m: any) => m.message)
+        const jobItems: string[] = (data.jobs || []).map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
         const combined = [...customItems, ...jobItems]
         if (combined.length && !cancelled) setTickerItems(combined)
       } catch {

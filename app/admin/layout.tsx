@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin/membership', label: 'Membership' },
   { href: '/admin/analytics', label: 'Analytics' },
   { href: '/admin/current-affairs', label: 'Current Affairs' },
+  { href: '/admin/blog', label: 'Guides & Articles' },
   { href: '/admin/ticker', label: 'Ticker Messages' },
   { href: '/admin/sources', label: 'Sources' },
   { href: '/admin/seo', label: 'SEO' },
