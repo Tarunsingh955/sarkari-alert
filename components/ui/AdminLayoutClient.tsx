@@ -2,6 +2,7 @@
 import { useTheme } from '@/components/ui/ThemeProvider'
 
 const NAV = [
+  { href: '/admin/change-password', label: 'Change Password' },
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/jobs', label: 'Jobs' },
   { href: '/admin/news', label: 'News' },
