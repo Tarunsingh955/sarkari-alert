@@ -11,9 +11,11 @@ export const metadata: Metadata = {
 }
 
 async function getJobs(searchParams: any) {
-  let query = supabaseAdmin.from('jobs').select(`*,${searchParams.category ? 'categories!inner' : 'categories'}(name,color,icon,slug),states(name)`, { count: 'exact' }).eq('is_published', true).eq('is_active', true)
+  const catJoin = searchParams.category ? 'categories!inner' : 'categories'
+  const stateJoin = searchParams.state ? 'states!inner' : 'states'
+  let query = supabaseAdmin.from('jobs').select(`*,${catJoin}(name,color,icon,slug),${stateJoin}(name)`, { count: 'exact' }).eq('is_published', true).eq('is_active', true)
   if (searchParams.category) query = query.eq('categories.slug', searchParams.category)
-  if (searchParams.state) query = query.ilike('department', `%${searchParams.state}%`)
+  if (searchParams.state) query = query.eq('states.name', searchParams.state)
   if (searchParams.search) query = query.or(`title.ilike.%${searchParams.search}%,department.ilike.%${searchParams.search}%`)
   const sort = searchParams.sort || 'newest'
   if (sort === 'deadline') query = query.order('last_date', { ascending: true })

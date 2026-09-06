@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTheme } from '@/components/ui/ThemeProvider'
 
 export default function AdminAdmitCardsPage() {
+  const { colors } = useTheme()
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -34,20 +36,20 @@ export default function AdminAdmitCardsPage() {
     fetchItems()
   }
 
-  const iS: React.CSSProperties = { width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
-  const lS: React.CSSProperties = { display: 'block', fontSize: 10, color: '#64748b', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const iS: React.CSSProperties = { width: '100%', padding: '10px 14px', background: colors.inputBg, border: `1px solid ${colors.cardBorder}`, borderRadius: 8, color: '#fff', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }
+  const lS: React.CSSProperties = { display: 'block', fontSize: 10, color: colors.textMuted, fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }
 
   return (
     <div style={{ padding: 24 }}>
       {msg.text && <div style={{ background: msg.type === 'error' ? '#ef444420' : '#10b98120', border: `1px solid ${msg.type === 'error' ? '#ef444440' : '#10b98140'}`, borderRadius: 8, padding: '10px 16px', color: msg.type === 'error' ? '#ef4444' : '#34d399', fontSize: 13, marginBottom: 16, fontWeight: 600 }}>{msg.text}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#f1f5f9', margin: 0 }}>Admit Cards ({items.length})</h1>
-        <button onClick={() => setShowForm(!showForm)} style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 8, padding: '10px 20px', color: '#000', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{showForm ? 'Cancel' : '+ Add Admit Card'}</button>
+        <h1 style={{ fontSize: 20, fontWeight: 900, color: colors.textPrimary, margin: 0 }}>Admit Cards ({items.length})</h1>
+        <button onClick={() => setShowForm(!showForm)} style={{ background: `linear-gradient(135deg,${colors.accent},${colors.accentDark})`, border: 'none', borderRadius: 8, padding: '10px 20px', color: '#000', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>{showForm ? 'Cancel' : '+ Add Admit Card'}</button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} style={{ background: '#1e293b', borderRadius: 14, padding: 24, marginBottom: 20, border: '1px solid #334155' }}>
-          <h2 style={{ color: '#f59e0b', fontSize: 15, marginBottom: 18 }}>New Admit Card Add Karo</h2>
+        <form onSubmit={handleSubmit} style={{ background: colors.cardBg, borderRadius: 14, padding: 24, marginBottom: 20, border: `1px solid ${colors.cardBorder}` }}>
+          <h2 style={{ color: colors.accent, fontSize: 15, marginBottom: 18 }}>New Admit Card Add Karo</h2>
           <label style={lS}>Title *</label>
           <input required value={form.title} onChange={e => setForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="SSC CGL 2025 Admit Card" style={iS} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
@@ -58,17 +60,17 @@ export default function AdminAdmitCardsPage() {
           <input value={form.download_link} onChange={e => setForm((f: any) => ({ ...f, download_link: e.target.value }))} placeholder="https://..." style={iS} />
           <label style={lS}>Details</label>
           <textarea value={form.details} onChange={e => setForm((f: any) => ({ ...f, details: e.target.value }))} placeholder="Admit card ke baare mein details..." style={{ ...iS, height: 80, resize: 'vertical' }} />
-          <button type="submit" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', border: 'none', borderRadius: 8, padding: '12px 32px', color: '#000', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>Add Admit Card</button>
+          <button type="submit" style={{ background: `linear-gradient(135deg,${colors.accent},${colors.accentDark})`, border: 'none', borderRadius: 8, padding: '12px 32px', color: '#000', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>Add Admit Card</button>
         </form>
       )}
 
-      {loading ? <div style={{ textAlign: 'center', color: '#64748b', padding: 40 }}>Loading...</div> : (
+      {loading ? <div style={{ textAlign: 'center', color: colors.textMuted, padding: 40 }}>Loading...</div> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {items.map((r: any) => (
-            <div key={r.id} style={{ background: '#1e293b', borderRadius: 10, padding: '14px 16px', border: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div key={r.id} style={{ background: colors.cardBg, borderRadius: 10, padding: '14px 16px', border: `1px solid ${colors.cardBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#f1f5f9', fontSize: 13, fontWeight: 700 }}>{r.title}</div>
-                <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{r.release_date || 'No date'} {r.exam_date && `— Exam: ${r.exam_date}`}</div>
+                <div style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 700 }}>{r.title}</div>
+                <div style={{ color: colors.textMuted, fontSize: 11, marginTop: 2 }}>{r.release_date || 'No date'} {r.exam_date && `— Exam: ${r.exam_date}`}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 {r.download_link && <a href={r.download_link} target="_blank" rel="noreferrer" style={{ background: '#3b82f622', border: '1px solid #3b82f644', borderRadius: 6, padding: '4px 12px', color: '#3b82f6', fontSize: 12, textDecoration: 'none' }}>Link</a>}
@@ -76,7 +78,7 @@ export default function AdminAdmitCardsPage() {
               </div>
             </div>
           ))}
-          {!items.length && <div style={{ textAlign: 'center', padding: 32, color: '#64748b' }}>Koi admit card nahi. Upar se add karein.</div>}
+          {!items.length && <div style={{ textAlign: 'center', padding: 32, color: colors.textMuted }}>Koi admit card nahi. Upar se add karein.</div>}
         </div>
       )}
     </div>
