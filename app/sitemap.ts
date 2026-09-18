@@ -3,10 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL || 'https://sarkari-alert.in'
-  const [{ data: jobs }, { data: news }, { data: papers }] = await Promise.all([
+  const [{ data: jobs }, { data: news }, { data: papers }, { data: blogPosts }] = await Promise.all([
     supabaseAdmin.from('jobs').select('slug,updated_at').eq('is_published', true).limit(5000),
     supabaseAdmin.from('news').select('slug,updated_at').eq('is_published', true).limit(1000),
     supabaseAdmin.from('previous_papers').select('slug,created_at').eq('is_active', true).limit(500),
+    supabaseAdmin.from('blog_posts').select('slug,updated_at,created_at').eq('is_published', true).limit(1000),
   ])
   const staticPages: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), changeFrequency: 'hourly', priority: 1.0 },
@@ -21,9 +22,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/exam-calendar`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${base}/advertise`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/privacy-policy`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   ]
   const jobPages = (jobs || []).map(j => ({ url: `${base}/jobs/${j.slug}`, lastModified: new Date(j.updated_at), changeFrequency: 'daily' as const, priority: 0.8 }))
   const newsPages = (news || []).map(n => ({ url: `${base}/news/${n.slug}`, lastModified: new Date(n.updated_at), changeFrequency: 'weekly' as const, priority: 0.6 }))
   const paperPages = (papers || []).map(p => ({ url: `${base}/previous-papers/${p.slug}`, lastModified: new Date(p.created_at), changeFrequency: 'monthly' as const, priority: 0.6 }))
-  return [...staticPages, ...jobPages, ...newsPages, ...paperPages]
+  const blogPages = (blogPosts || []).map(b => ({ url: `${base}/blog/${b.slug}`, lastModified: new Date(b.updated_at || b.created_at), changeFrequency: 'monthly' as const, priority: 0.7 }))
+  return [...staticPages, ...jobPages, ...newsPages, ...paperPages, ...blogPages]
 }
