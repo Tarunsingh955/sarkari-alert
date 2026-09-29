@@ -6,7 +6,7 @@ import ThemeProvider from '@/components/ui/ThemeProvider'
 const notoSans = Noto_Sans({ subsets: ['latin'], weight: ['400','600','700','900'], display: 'swap' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://sarkari-alert.in'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://sarkari-alert.com'),
   title: { default: 'SarkariAlert — India #1 Govt Job Portal 2025', template: '%s | SarkariAlert' },
   description: 'Latest Sarkari Naukri 2025. SSC, Railway, UPSC, Banking, State Jobs. Free Resume Builder, Current Affairs, Admit Card, Result, Previous Papers.',
   keywords: ['sarkari naukri','govt jobs 2025','sarkari alert','SSC jobs','railway jobs','UPSC','banking jobs','sarkari result'],

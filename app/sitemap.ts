@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://sarkari-alert.in'
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://sarkari-alert.com'
   const [{ data: jobs }, { data: news }, { data: papers }, { data: blogPosts }] = await Promise.all([
     supabaseAdmin.from('jobs').select('slug,updated_at').eq('is_published', true).limit(5000),
     supabaseAdmin.from('news').select('slug,updated_at').eq('is_published', true).limit(1000),

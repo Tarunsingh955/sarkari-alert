@@ -11,6 +11,7 @@ export default function AdminJobsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [msg, setMsg] = useState({ text: '', type: '' })
   const [backfilling, setBackfilling] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
   const blankForm = { title:'',department:'',total_posts:'',last_date:'',salary_text:'',salary_min:'',salary_max:'',qualification:'',age_text:'',exam_date:'',apply_link:'',notification_pdf:'',official_website:'',selection_process:'',description:'',notify_text:'Apply Now',category_id:'',state_id:'',is_new:true,is_hot:false,is_published:true }
   const [form, setForm] = useState<any>(blankForm)
   const showMsg = (text:string,type='success') => { setMsg({text,type}); setTimeout(()=>setMsg({text:'',type:''}),4000) }
@@ -70,6 +71,22 @@ export default function AdminJobsPage() {
     } catch (e: any) { showMsg('Error: ' + e.message, 'error') }
     setBackfilling(false)
   }
+  async function handleCleanExisting() {
+    setCleaning(true)
+    try {
+      const previewRes = await fetch('/api/admin/jobs/clean-existing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: true }) })
+      const preview = await previewRes.json()
+      if (preview.error) { showMsg('Error: ' + preview.error, 'error'); setCleaning(false); return }
+      if (preview.needFix === 0) { showMsg('Koi job fix karne layak nahi mili — sab saaf hai!'); setCleaning(false); return }
+      const ok = confirm(`${preview.totalJobs} jobs check ki gayi.\n${preview.needFix} jobs mein problem mili:\n- ${preview.departmentFixes} jobs ka department source site ka naam hai (title se sahi naam nikala jayega)\n- ${preview.descriptionFixes} jobs ki description mein HTML code hai (saaf kiya jayega)\n\nInhe fix karein?`)
+      if (!ok) { setCleaning(false); return }
+      const applyRes = await fetch('/api/admin/jobs/clean-existing', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dryRun: false }) })
+      const result = await applyRes.json()
+      if (result.error) showMsg('Error: ' + result.error, 'error')
+      else { showMsg(`${result.needFix} jobs fix ho gayi!`); fetchJobs() }
+    } catch (e: any) { showMsg('Error: ' + e.message, 'error') }
+    setCleaning(false)
+  }
   const iS={width:'100%',padding:'10px 14px',background:colors.inputBg,border:`1px solid ${colors.cardBorder}`,borderRadius:8,color:colors.textPrimary,fontSize:13,outline:'none',boxSizing:'border-box' as const,marginBottom:10}
   const lS={display:'block' as const,fontSize:10,color:colors.textMuted,fontWeight:600,marginBottom:4,textTransform:'uppercase' as const,letterSpacing:'0.08em'}
   return (
@@ -78,6 +95,7 @@ export default function AdminJobsPage() {
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:12}}>
         <div><h1 style={{fontSize:20,fontWeight:900,color:colors.textPrimary,margin:0}}>Manage Jobs ({jobs.length})</h1><p style={{color:colors.textMuted,fontSize:12,marginTop:4}}>Sab published aur unpublished jobs</p></div>
         <div style={{display:'flex',gap:10,flexShrink:0}}>
+          <button onClick={handleCleanExisting} disabled={cleaning} style={{background:colors.inputBg,border:`1px solid ${colors.cardBorder}`,borderRadius:8,padding:'10px 18px',color:colors.textSecondary,fontWeight:600,fontSize:13,cursor:cleaning?'default':'pointer',opacity:cleaning?0.6:1}}>{cleaning?'Checking...':'Clean Old Jobs (HTML/Department)'}</button>
           <button onClick={handleBackfillStates} disabled={backfilling} style={{background:colors.inputBg,border:`1px solid ${colors.cardBorder}`,borderRadius:8,padding:'10px 18px',color:colors.textSecondary,fontWeight:600,fontSize:13,cursor:backfilling?'default':'pointer',opacity:backfilling?0.6:1}}>{backfilling?'Checking...':'Auto-Detect States (Old Jobs)'}</button>
           <button onClick={()=>{ if(showForm) cancelForm(); else setShowForm(true) }} style={{background:`linear-gradient(135deg,${colors.accent},${colors.accentDark})`,border:'none',borderRadius:8,padding:'10px 20px',color:'#000',fontWeight:700,fontSize:13,cursor:'pointer'}}>{showForm?'Cancel':'+ Add New Job'}</button>
         </div>

@@ -7,6 +7,7 @@ const TEMPLATES = {
   classic: { name: 'Classic Navy', color: '#1e3a5f', font: 'Georgia,serif', premium: false, layout: 'centered' },
   modern: { name: 'Modern Blue', color: '#0369a1', font: 'Arial,sans-serif', premium: true, layout: 'sidebar' },
   elegant: { name: 'Elegant Green', color: '#166534', font: '"Times New Roman",serif', premium: true, layout: 'banner' },
+  professional: { name: 'Professional Maroon', color: '#7c2d12', font: 'Arial,sans-serif', premium: true, layout: 'accent-bar' },
 }
 type TemplateKey = keyof typeof TEMPLATES
 
@@ -52,6 +53,22 @@ export default function ResumeBuildPage() {
   }
 
   function renderHeader() {
+    if (activeTemplate.layout === 'accent-bar') {
+      return (
+        <div style={{ display: 'flex', gap: 20, marginBottom: 20, marginLeft: -40, marginTop: -40, marginRight: -40, alignItems: 'stretch' }}>
+          <div style={{ width: 10, background: activeTemplate.color, flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, padding: '32px 0 20px', flex: 1 }}>
+            {isPremium && data.photo && <img src={data.photo} alt="Photo" style={{ width: 76, height: 76, borderRadius: 8, objectFit: 'cover', border: `2px solid ${activeTemplate.color}` }} />}
+            <div>
+              <h1 style={{ fontSize: 27, fontWeight: 800, color: '#111827', marginBottom: 6, letterSpacing: '0.02em' }}>{data.name || 'Aapka Naam'}</h1>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 12, color: activeTemplate.color, fontWeight: 700 }}>
+                {[data.phone, data.email, data.city, data.dob && `DOB: ${data.dob}`].filter(Boolean).map((v, i) => <span key={i}>{v}</span>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
     if (activeTemplate.layout === 'sidebar') {
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, borderBottom: `3px solid ${activeTemplate.color}`, paddingBottom: 18, marginBottom: 20 }}>
@@ -112,6 +129,15 @@ export default function ResumeBuildPage() {
                             <div style={{ width: '90%', height: 4, background: '#e2e8f0', borderRadius: 2 }} />
                           </div>
                         </>
+                      ) : t.layout === 'accent-bar' ? (
+                        <div style={{ display: 'flex', height: '100%' }}>
+                          <div style={{ width: 8, background: t.color, flexShrink: 0 }} />
+                          <div style={{ padding: '10px', flex: 1 }}>
+                            <div style={{ width: '75%', height: 6, background: '#111827', borderRadius: 2, marginBottom: 6 }} />
+                            <div style={{ width: '85%', height: 4, background: t.color, opacity: 0.5, borderRadius: 2, marginBottom: 4 }} />
+                            <div style={{ width: '60%', height: 4, background: '#e2e8f0', borderRadius: 2 }} />
+                          </div>
+                        </div>
                       ) : t.layout === 'sidebar' ? (
                         <div style={{ display: 'flex', padding: '10px' }}>
                           <div style={{ width: 20, height: 20, borderRadius: 6, background: t.color, flexShrink: 0, marginRight: 8 }} />

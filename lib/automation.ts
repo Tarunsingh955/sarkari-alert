@@ -22,6 +22,48 @@ function normalizeTitleWords(title: string): Set<string> {
   return new Set(words)
 }
 
+// RSS feeds (especially WordPress aggregator sites) hand back raw HTML in
+// their content/description field — tags, entities, and sometimes trailing
+// "Related Posts" / share-button boilerplate. Left as-is, this shows up as
+// literal <p>, <a href=...>, &nbsp; text on the job page instead of a clean
+// paragraph, which is what "description kharab ho raha hai" was about.
+export function cleanScrapedContent(raw: string): string {
+  if (!raw) return ''
+  let text = raw
+    // drop script/style blocks entirely (content included)
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+    // convert common block-level tags to line breaks before stripping, so
+    // paragraphs don't all run together into one giant sentence
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    // strip all remaining tags
+    .replace(/<[^>]+>/g, ' ')
+    // decode the handful of entities that actually show up in these feeds
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&#8217;|&#8216;/gi, "'")
+    .replace(/&#8220;|&#8221;/gi, '"')
+    .replace(/&#8211;|&#8212;/gi, '-')
+    .replace(/&hellip;/gi, '...')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    // collapse repeated blank lines/spaces left over from the tag removal
+    .split('\n').map(line => line.replace(/[ \t]+/g, ' ').trim()).filter(Boolean).join('\n')
+    .trim()
+
+  // Aggregator feeds often tack on a "Read more:" / "Also Read" / social
+  // share line at the very end — cut the text off at the first one found so
+  // it doesn't linger in the stored description.
+  const boilerplateMarkers = /(read more|also read|for more (details|updates)|share this|follow us on)/i
+  const lines = text.split('\n')
+  const cutIndex = lines.findIndex(l => boilerplateMarkers.test(l))
+  if (cutIndex > 0) text = lines.slice(0, cutIndex).join('\n').trim()
+
+  return text
+}
+
 // Two titles are considered the same recruitment if most of their
 // significant (non-filler) words overlap — catches the same job posted
 // with slightly different wording across different source sites.
@@ -90,14 +132,16 @@ async function scrapeRSS(source: any): Promise<number> {
     if (isDuplicateAcrossSources) continue
 
     const rawContent = item.content || item.contentSnippet || ''
+    const cleanedContent = cleanScrapedContent(rawContent)
 
     await supabaseAdmin.from('automation_queue').insert({
       title,
       data: {
         title,
-        content: rawContent,
+        content: cleanedContent,
+        raw_content: rawContent,
         question: `${title}?`,
-        answer: rawContent.slice(0, 500),
+        answer: cleanedContent.slice(0, 500),
         link: item.link,
         pub_date: item.pubDate,
         source_name: source.name,
@@ -265,18 +309,49 @@ Respond with ONLY valid JSON, no markdown fences, no extra text, in this exact s
   }
 }
 
+// Words that signal "the organisation name part of the title has ended" —
+// once one of these (or a token starting with a digit, like a year or "15th")
+// shows up, everything before it is taken as the recruiting organisation.
+// This is a best-effort guess from the title text — it is NOT the aggregator
+// site's own name (that was the earlier bug: falling back to source_name,
+// which put "Sarkari Naukri Job Alert" in the department field instead of
+// the actual recruiter like "IBPS").
+const ORG_NAME_STOP_WORDS = new Set([
+  'recruitment','bharti','online','form','notification','vacancy','vacancies',
+  'apply','date','extended','result','admit','card','various','post','posts',
+  'walk-in','walkin','written','exam','answer','key','last','released','jaari',
+  'jobs','job','for','ki','ka','ke','notice','out','released','update','updated',
+])
+
+export function extractOrgFromTitle(title: string): string | null {
+  const words = (title || '').trim().split(/\s+/)
+  let cut = words.length
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i].replace(/[^a-zA-Z0-9]/g, '')
+    if (!w) { cut = i; break } // hit a bare delimiter like "|" or "-"
+    if (/^\d/.test(w)) { cut = i; break } // starts with a digit — a year, "15th", etc.
+    if (ORG_NAME_STOP_WORDS.has(w.toLowerCase())) { cut = i; break }
+  }
+  const org = words.slice(0, Math.min(cut, 6)).join(' ').trim()
+  return org.length >= 3 ? org : null
+}
+
 export async function approveQueueItem(queueId: string, adminId: string) {
   const { data: item } = await supabaseAdmin.from('automation_queue').select('*').eq('id', queueId).single()
   if (!item) throw new Error('Item not found')
   const d = item.data
   const slug = generateUniqueSlug(d.title || item.title || 'untitled')
+  // Clean again at approval time: items that were queued BEFORE the ingest-time
+  // cleaning existed still hold raw HTML in d.content. Cleaning is safe to run
+  // on already-clean text, so this covers both old and new queue items.
+  const body = cleanScrapedContent(d.content || '')
 
   if (item.type === 'job') {
     const jobTitle = d.title || item.title
-    const jobDept = d.department || d.source_name || 'Government of India'
+    const jobDept = d.department || extractOrgFromTitle(jobTitle) || 'Government of India'
     const categorySlug = classifyJobCategory(jobTitle, jobDept)
     const { data: categoryRow } = await supabaseAdmin.from('categories').select('id').eq('slug', categorySlug).maybeSingle()
-    const officialLink = await extractOfficialLink(d.link || d.official_website || '', d.content)
+    const officialLink = await extractOfficialLink(d.link || d.official_website || '', d.raw_content || d.content)
 
     const { data: job } = await supabaseAdmin.from('jobs').insert({
       title: jobTitle,
@@ -286,7 +361,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       total_posts: 'As per notification',
       last_date: d.last_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
       salary_text: 'As per rules',
-      description: d.content || '',
+      description: body,
       apply_link: officialLink,
       official_website: officialLink,
       source_url: item.source_url,
@@ -298,27 +373,27 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       await Promise.allSettled([sendTelegramAlert(job), sendEmailAlerts(job), sendWhatsAppAlert(job), sendPushNotification(job.title, `${job.total_posts} Posts available!`, `/jobs/${job.slug}`)])
     }
   } else if (item.type === 'admit_card') {
-    const officialLink = await extractOfficialLink(d.link || '', d.content)
+    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
     await supabaseAdmin.from('admit_cards').insert({
       title: d.title || item.title,
       slug,
       release_date: new Date().toISOString().split('T')[0],
       download_link: officialLink,
-      details: d.content || '',
+      details: body,
       is_active: true,
     })
   } else if (item.type === 'result') {
-    const officialLink = await extractOfficialLink(d.link || '', d.content)
+    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
     await supabaseAdmin.from('results').insert({
       title: d.title || item.title,
       slug,
       release_date: new Date().toISOString().split('T')[0],
       download_link: officialLink,
-      details: d.content || '',
+      details: body,
       is_active: true,
     })
   } else if (item.type === 'answer_key') {
-    const officialLink = await extractOfficialLink(d.link || '', d.content)
+    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
     await supabaseAdmin.from('answer_keys').insert({
       title: d.title || item.title,
       slug,
@@ -328,7 +403,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     })
   } else if (item.type === 'current_affairs') {
     const now = new Date()
-    const mcq = await generateMCQFromNews(d.title || item.title, d.content || d.answer || '')
+    const mcq = await generateMCQFromNews(d.title || item.title, body || cleanScrapedContent(d.answer || ''))
 
     if (mcq) {
       await supabaseAdmin.from('current_affairs').insert({
@@ -348,7 +423,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     } else {
       await supabaseAdmin.from('current_affairs').insert({
         question: d.question || d.title || item.title,
-        answer: d.answer || d.content || '',
+        answer: cleanScrapedContent(d.answer || '') || body,
         topic: d.category || 'General',
         month: now.toLocaleString('en-US', { month: 'long' }),
         year: now.getFullYear(),
@@ -361,8 +436,8 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     await supabaseAdmin.from('news').insert({
       title: d.title || item.title,
       slug,
-      content: d.content || '',
-      excerpt: (d.content || '').slice(0, 150),
+      content: body,
+      excerpt: body.slice(0, 150),
       external_link: d.link || '',
       category: d.category || 'General',
       is_published: true,
