@@ -8,6 +8,7 @@ const TEMPLATES = {
   modern: { name: 'Modern Blue', color: '#0369a1', font: 'Arial,sans-serif', premium: true, layout: 'sidebar' },
   elegant: { name: 'Elegant Green', color: '#166534', font: '"Times New Roman",serif', premium: true, layout: 'banner' },
   professional: { name: 'Professional Maroon', color: '#7c2d12', font: 'Arial,sans-serif', premium: true, layout: 'accent-bar' },
+  minimal: { name: 'Minimalist ATS', color: '#1f2937', font: 'Arial,sans-serif', premium: true, layout: 'minimal' },
 }
 type TemplateKey = keyof typeof TEMPLATES
 
@@ -53,6 +54,18 @@ export default function ResumeBuildPage() {
   }
 
   function renderHeader() {
+    if (activeTemplate.layout === 'minimal') {
+      return (
+        <div style={{ textAlign: 'center', marginBottom: 20, paddingBottom: 16 }}>
+          {isPremium && data.photo && <img src={data.photo} alt="Photo" style={{ width: 70, height: 70, borderRadius: '50%', objectFit: 'cover', marginBottom: 10 }} />}
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>{data.name || 'Aapka Naam'}</h1>
+          <div style={{ width: 60, height: 2, background: activeTemplate.color, margin: '0 auto 10px' }} />
+          <div style={{ fontSize: 12, color: '#4b5563' }}>
+            {[data.phone, data.email, data.city, data.dob && `DOB: ${data.dob}`].filter(Boolean).join('   |   ')}
+          </div>
+        </div>
+      )
+    }
     if (activeTemplate.layout === 'accent-bar') {
       return (
         <div style={{ display: 'flex', gap: 20, marginBottom: 20, marginLeft: -40, marginTop: -40, marginRight: -40, alignItems: 'stretch' }}>
@@ -129,6 +142,12 @@ export default function ResumeBuildPage() {
                             <div style={{ width: '90%', height: 4, background: '#e2e8f0', borderRadius: 2 }} />
                           </div>
                         </>
+                      ) : t.layout === 'minimal' ? (
+                        <div style={{ padding: '14px 10px', textAlign: 'center' }}>
+                          <div style={{ width: '60%', height: 6, background: '#111827', borderRadius: 2, margin: '0 auto 6px' }} />
+                          <div style={{ width: 24, height: 2, background: t.color, margin: '0 auto 6px' }} />
+                          <div style={{ width: '70%', height: 4, background: '#e2e8f0', borderRadius: 2, margin: '0 auto' }} />
+                        </div>
                       ) : t.layout === 'accent-bar' ? (
                         <div style={{ display: 'flex', height: '100%' }}>
                           <div style={{ width: 8, background: t.color, flexShrink: 0 }} />

@@ -13,18 +13,26 @@ export default function CurrentAffairsPage() {
   const [selectedMonth, setSelectedMonth] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [score, setScore] = useState({ correct: 0, wrong: 0 })
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => { fetchItems() }, [selectedMonth])
 
   async function fetchItems() {
     setLoading(true)
-    const url = selectedMonth ? `/api/current-affairs?month=${selectedMonth}` : '/api/current-affairs'
-    const res = await fetch(url)
-    const data = await res.json()
-    setItems(data.items || [])
-    setAnswers({})
-    setScore({ correct: 0, wrong: 0 })
-    setLoading(false)
+    setLoadError(false)
+    try {
+      const url = selectedMonth ? `/api/current-affairs?month=${selectedMonth}` : '/api/current-affairs'
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Request failed')
+      const data = await res.json()
+      setItems(data.items || [])
+      setAnswers({})
+      setScore({ correct: 0, wrong: 0 })
+    } catch {
+      setLoadError(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function handleAnswer(itemId: string, selected: string, correct: string) {
@@ -68,6 +76,11 @@ export default function CurrentAffairsPage() {
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 48, color: colors.textMuted }}>Loading...</div>
+        ) : loadError ? (
+          <div style={{ textAlign: 'center', padding: 48, color: colors.textMuted }}>
+            <p style={{ marginBottom: 12 }}>Load nahi ho paya. Internet check karke dobara try karein.</p>
+            <button onClick={fetchItems} style={{ padding: '8px 20px', background: colors.accent, border: 'none', borderRadius: 8, color: '#000', fontWeight: 700, cursor: 'pointer' }}>Dobara Try Karein</button>
+          </div>
         ) : !items.length ? (
           <div style={{ textAlign: 'center', padding: 48, color: colors.textMuted }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📰</div>

@@ -17,7 +17,12 @@ export default function Header() {
         if (!res.ok) return
         const data = await res.json()
         const customItems: string[] = (data.messages || []).map((m: any) => m.message)
-        const jobItems: string[] = (data.jobs || []).map((j: any) => `${j.title} - ${j.total_posts || 'Multiple'} Posts`)
+        const jobItems: string[] = (data.jobs || []).map((j: any) => {
+          const posts = j.total_posts
+          const isNumeric = posts !== null && posts !== undefined && posts !== '' && !isNaN(Number(posts))
+          const postsText = isNumeric ? `${posts} Posts` : (posts || 'Multiple Posts')
+          return `${j.title} - ${postsText}`
+        })
         const combined = [...customItems, ...jobItems]
         if (combined.length && !cancelled) setTickerItems(combined)
       } catch {
