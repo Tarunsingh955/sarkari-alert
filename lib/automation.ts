@@ -344,23 +344,48 @@ export async function approveQueueItem(queueId: string, adminId: string) {
   // Clean again at approval time: items that were queued BEFORE the ingest-time
   // cleaning existed still hold raw HTML in d.content. Cleaning is safe to run
   // on already-clean text, so this covers both old and new queue items.
-  const body = cleanScrapedContent(d.content || '')
+  // If the admin hand-edited the text in the review queue, publish exactly what
+  // they typed — the boilerplate cleaner would otherwise cut lines such as
+  // "for more details..." out of their own wording.
+  const body = d.content_edited ? String(d.content || '') : cleanScrapedContent(d.content || '')
+  const answerText = d.answer_edited ? String(d.answer || '') : cleanScrapedContent(d.answer || '')
+
+  // An apply/download link typed by the admin wins; otherwise fall back to
+  // pulling the official link out of the source article automatically.
+  const resolveLink = async (primary: string) => {
+    const manual = typeof d.apply_link === 'string' ? d.apply_link.trim() : ''
+    return manual || await extractOfficialLink(primary, d.raw_content || d.content)
+  }
 
   if (item.type === 'job') {
     const jobTitle = d.title || item.title
     const jobDept = d.department || extractOrgFromTitle(jobTitle) || 'Government of India'
-    const categorySlug = classifyJobCategory(jobTitle, jobDept)
-    const { data: categoryRow } = await supabaseAdmin.from('categories').select('id').eq('slug', categorySlug).maybeSingle()
-    const officialLink = await extractOfficialLink(d.link || d.official_website || '', d.raw_content || d.content)
+    // Category: admin's pick if they chose one, else auto-detect from the title
+    let categoryId: string | null = d.category_id || null
+    if (!categoryId) {
+      const categorySlug = classifyJobCategory(jobTitle, jobDept)
+      const { data: categoryRow } = await supabaseAdmin.from('categories').select('id').eq('slug', categorySlug).maybeSingle()
+      categoryId = categoryRow?.id || null
+    }
+    const officialLink = await resolveLink(d.link || d.official_website || '')
+
+    // These only get written when the admin filled them in, so the database's
+    // own defaults still apply to everything else (same as before this editor).
+    const optionalFields: Record<string, any> = {}
+    for (const k of ['qualification', 'age_text', 'exam_date', 'selection_process'] as const) {
+      if (d[k] && String(d[k]).trim()) optionalFields[k] = String(d[k]).trim()
+    }
+    if (d.state_id) optionalFields.state_id = d.state_id
 
     const { data: job } = await supabaseAdmin.from('jobs').insert({
       title: jobTitle,
       slug,
       department: jobDept,
-      category_id: categoryRow?.id || null,
-      total_posts: 'As per notification',
+      category_id: categoryId,
+      total_posts: d.total_posts || 'As per notification',
       last_date: d.last_date || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
-      salary_text: 'As per rules',
+      salary_text: d.salary_text || 'As per rules',
+      ...optionalFields,
       description: body,
       apply_link: officialLink,
       official_website: officialLink,
@@ -373,7 +398,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       await Promise.allSettled([sendTelegramAlert(job), sendEmailAlerts(job), sendWhatsAppAlert(job), sendPushNotification(job.title, `${job.total_posts} Posts available!`, `/jobs/${job.slug}`)])
     }
   } else if (item.type === 'admit_card') {
-    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
+    const officialLink = await resolveLink(d.link || '')
     await supabaseAdmin.from('admit_cards').insert({
       title: d.title || item.title,
       slug,
@@ -383,7 +408,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       is_active: true,
     })
   } else if (item.type === 'result') {
-    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
+    const officialLink = await resolveLink(d.link || '')
     await supabaseAdmin.from('results').insert({
       title: d.title || item.title,
       slug,
@@ -393,7 +418,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
       is_active: true,
     })
   } else if (item.type === 'answer_key') {
-    const officialLink = await extractOfficialLink(d.link || '', d.raw_content || d.content)
+    const officialLink = await resolveLink(d.link || '')
     await supabaseAdmin.from('answer_keys').insert({
       title: d.title || item.title,
       slug,
@@ -403,7 +428,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     })
   } else if (item.type === 'current_affairs') {
     const now = new Date()
-    const mcq = await generateMCQFromNews(d.title || item.title, body || cleanScrapedContent(d.answer || ''))
+    const mcq = await generateMCQFromNews(d.title || item.title, body || answerText)
 
     if (mcq) {
       await supabaseAdmin.from('current_affairs').insert({
@@ -423,7 +448,7 @@ export async function approveQueueItem(queueId: string, adminId: string) {
     } else {
       await supabaseAdmin.from('current_affairs').insert({
         question: d.question || d.title || item.title,
-        answer: cleanScrapedContent(d.answer || '') || body,
+        answer: answerText || body,
         topic: d.category || 'General',
         month: now.toLocaleString('en-US', { month: 'long' }),
         year: now.getFullYear(),
